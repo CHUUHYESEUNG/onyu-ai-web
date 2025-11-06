@@ -4,20 +4,85 @@
  * 브라우저와 서버 환경 모두에서 사용 가능한 Supabase 클라이언트를 제공합니다.
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database';
 
-// 환경 변수 검증
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const ensurePublicEnv = () => {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
-    'Supabase 환경 변수가 설정되지 않았습니다. .env.local 파일을 확인하세요.\n' +
-    '필요한 변수: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY'
-  );
-}
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error(
+      'Supabase 환경 변수가 설정되지 않았습니다. .env.local 파일을 확인하세요.\n' +
+      '필요한 변수: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY'
+    );
+  }
+
+  return { supabaseUrl, supabaseAnonKey };
+};
+
+let supabaseClient: SupabaseClient<Database> | null = null;
+let supabaseAdminClient: SupabaseClient<Database> | null = null;
+
+export const getSupabaseClient = (): SupabaseClient<Database> => {
+  if (!supabaseClient) {
+    const { supabaseUrl, supabaseAnonKey } = ensurePublicEnv();
+    supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+      },
+      realtime: {
+        params: {
+          eventsPerSecond: 10,
+        },
+      },
+    });
+  }
+
+  return supabaseClient;
+};
+
+export const getSupabaseAdminClient = (): SupabaseClient<Database> => {
+  if (!supabaseAdminClient) {
+    const { supabaseUrl, supabaseAnonKey } = ensurePublicEnv();
+    const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    supabaseAdminClient = createClient<Database>(
+      supabaseUrl,
+      supabaseServiceRoleKey || supabaseAnonKey,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
+  }
+
+  return supabaseAdminClient;
+};
+
+const bindClient = <T extends object>(resolve: () => T): T =>
+  new Proxy({} as T, {
+    get(_target, property, receiver) {
+      const client = resolve();
+      const value = Reflect.get(client, property, receiver);
+      return typeof value === 'function' ? value.bind(client) : value;
+    },
+    has(_target, property) {
+      const client = resolve();
+      return Reflect.has(client, property);
+    },
+    ownKeys() {
+      const client = resolve();
+      return Reflect.ownKeys(client);
+    },
+    getOwnPropertyDescriptor(_target, property) {
+      const client = resolve();
+      return Reflect.getOwnPropertyDescriptor(client, property);
+    },
+  });
 
 /**
  * 브라우저 및 서버 사이드에서 사용할 Supabase 클라이언트
@@ -29,17 +94,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
  *   .from('projects')
  *   .select('*');
  */
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-  },
-  realtime: {
-    params: {
-      eventsPerSecond: 10,
-    },
-  },
-});
+export const supabase = bindClient<SupabaseClient<Database>>(getSupabaseClient);
 
 /**
  * 서버 사이드 전용 Supabase 클라이언트 (Service Role)
@@ -55,16 +110,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
  *   .from('admin_only_table')
  *   .select('*');
  */
-export const supabaseAdmin = createClient<Database>(
-  supabaseUrl,
-  supabaseServiceRoleKey || supabaseAnonKey, // 클라이언트에서는 anon key 사용
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  }
-);
+export const supabaseAdmin = bindClient<SupabaseClient<Database>>(getSupabaseAdminClient);
 
 /**
  * Storage 헬퍼 함수
@@ -79,8 +125,9 @@ export const storage = {
   async uploadAudio(file: File, projectId: string): Promise<string> {
     const fileName = `${Date.now()}_${file.name}`;
     const filePath = `${projectId}/${fileName}`;
+    const client = getSupabaseClient();
 
-    const { data, error } = await supabase.storage
+    const { data, error } = await client.storage
       .from('audio-uploads')
       .upload(filePath, file, {
         cacheControl: '3600',
@@ -91,7 +138,7 @@ export const storage = {
       throw new Error(`오디오 업로드 실패: ${error.message}`);
     }
 
-    const { data: { publicUrl } } = supabase.storage
+    const { data: { publicUrl } } = client.storage
       .from('audio-uploads')
       .getPublicUrl(data.path);
 
@@ -104,7 +151,8 @@ export const storage = {
    * @returns Blob 데이터
    */
   async downloadAudio(filePath: string): Promise<Blob> {
-    const { data, error } = await supabase.storage
+    const client = getSupabaseClient();
+    const { data, error } = await client.storage
       .from('audio-uploads')
       .download(filePath);
 
@@ -125,8 +173,9 @@ export const storage = {
   async uploadDocument(file: Blob, projectId: string, type: 'pdf' | 'epub'): Promise<string> {
     const fileName = `${projectId}.${type}`;
     const filePath = `${projectId}/${fileName}`;
+    const client = getSupabaseClient();
 
-    const { data, error } = await supabase.storage
+    const { data, error } = await client.storage
       .from('documents')
       .upload(filePath, file, {
         cacheControl: '3600',
@@ -137,7 +186,7 @@ export const storage = {
       throw new Error(`문서 업로드 실패: ${error.message}`);
     }
 
-    const { data: { publicUrl } } = supabase.storage
+    const { data: { publicUrl } } = client.storage
       .from('documents')
       .getPublicUrl(data.path);
 
@@ -159,7 +208,8 @@ export const realtime = {
     assetId: string,
     callback: (status: string, progress?: number) => void
   ) {
-    const channel = supabase
+    const client = getSupabaseClient();
+    const channel = client
       .channel(`audio_processing_${assetId}`)
       .on(
         'postgres_changes',
@@ -176,7 +226,7 @@ export const realtime = {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      client.removeChannel(channel);
     };
   },
 
@@ -214,7 +264,8 @@ export const realtime = {
       return typeof row.id === 'string' && typeof row.title === 'string' && typeof row.content === 'string';
     };
 
-    const channel = supabase
+    const client = getSupabaseClient();
+    const channel = client
       .channel(`section_${sectionId}`)
       .on(
         'postgres_changes',
@@ -233,7 +284,7 @@ export const realtime = {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      client.removeChannel(channel);
     };
   },
 };
