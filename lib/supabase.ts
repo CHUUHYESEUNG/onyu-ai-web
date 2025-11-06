@@ -183,7 +183,34 @@ export const realtime = {
    * @param callback - 변경 시 실행할 콜백
    * @returns Unsubscribe 함수
    */
-  subscribeToSection(sectionId: string, callback: (section: any) => void) {
+  subscribeToSection(
+    sectionId: string,
+    callback: (section: {
+      id: string;
+      title: string;
+      content: string;
+      excerpt?: string | null;
+      event_id?: string | null;
+      order?: number | null;
+      created_at?: string | null;
+      updated_at?: string | null;
+    }) => void,
+  ) {
+    const isSectionRow = (value: unknown): value is {
+      id: string;
+      title: string;
+      content: string;
+      excerpt?: string | null;
+      event_id?: string | null;
+      order?: number | null;
+      created_at?: string | null;
+      updated_at?: string | null;
+    } => {
+      if (!value || typeof value !== 'object') return false;
+      const row = value as Record<string, unknown>;
+      return typeof row.id === 'string' && typeof row.title === 'string' && typeof row.content === 'string';
+    };
+
     const channel = supabase
       .channel(`section_${sectionId}`)
       .on(
@@ -195,7 +222,9 @@ export const realtime = {
           filter: `id=eq.${sectionId}`,
         },
         (payload) => {
-          callback(payload.new);
+          if (isSectionRow(payload.new)) {
+            callback(payload.new);
+          }
         }
       )
       .subscribe();
