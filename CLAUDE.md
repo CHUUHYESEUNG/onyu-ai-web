@@ -54,7 +54,9 @@ onyu-ai-web/
 │   ├── dashboard/         # 메인 대시보드
 │   │   └── page.tsx
 │   ├── projects/[projectId]/  # 프로젝트별 페이지
-│   │   ├── edit/          # 편집 페이지 ⭐ 새로 추가
+│   │   ├── edit/          # 편집 페이지 ⭐ 기능 확장
+│   │   │   └── page.tsx
+│   │   ├── publish/       # 출판 준비 페이지 ⭐ 신규 추가
 │   │   │   └── page.tsx
 │   │   └── preview/       # 미리보기 페이지
 │   │       └── page.tsx
@@ -67,6 +69,9 @@ onyu-ai-web/
 │   │   ├── section-list.tsx      # 좌측 섹션 리스트
 │   │   ├── section-editor.tsx    # 중앙 본문 에디터
 │   │   └── recording-panel.tsx   # 우측 녹음 & 처리 타임라인
+│   ├── modals/            # ⭐ 모달 컴포넌트
+│   │   └── add-section-modal.tsx # 소주제 추가 모달
+│   ├── publishing-flow.tsx # ⭐ 출판 마법사 (3단계)
 │   ├── landing-page.tsx   # 랜딩 페이지
 │   ├── editor-page.tsx    # 음성 녹음/편집 페이지
 │   ├── result-page.tsx    # 결과 표시 페이지
@@ -85,10 +90,10 @@ onyu-ai-web/
 │   ├── index.ts          # 통합 export
 │   ├── autobiography.ts  # 자서전 프로젝트 타입
 │   ├── user.ts           # 사용자 및 권한 타입
-│   ├── edit.ts           # ⭐ 편집 페이지 타입
+│   ├── edit.ts           # ⭐ 편집 페이지 타입 (확장됨)
 │   └── story.ts          # 기존 스토리 타입 (호환성)
 ├── lib/                   # 유틸리티 함수
-│   └── mock-api.ts       # ⭐ 목업 API 함수
+│   └── mock-api.ts       # ⭐ 목업 API 함수 (확장됨)
 └── public/               # 정적 파일
 ```
 
@@ -159,6 +164,28 @@ npm start
 
 ### 개요
 음성 인터뷰 자서전 편집 페이지는 사용자가 자서전을 체계적으로 작성하고 편집할 수 있는 핵심 인터페이스입니다.
+
+### ⭐ 최근 추가된 기능 (2025-01-06)
+
+#### 1. 대주제/소주제 CRUD 기능
+- **대주제 추가**: 타임라인 상단에 "대주제 추가" 버튼, 모달에서 제목·날짜·메모 입력
+- **대주제 수정**: 선택된 대주제를 수정할 수 있는 모달
+- **소주제 추가**: 3가지 입력 방식 선택
+  - 텍스트 작성: 직접 입력
+  - 음성 녹음: 녹음 → 전사 → 소단락 자동 생성
+  - 파일 가져오기: 음성/텍스트 파일 업로드 → 자동 처리
+- **AddSectionModal 컴포넌트**: 소주제 추가 UI 모듈화
+
+#### 2. 편집 워크플로우 개선
+- **임시 저장**: 헤더 우측에 "임시 저장" 버튼 (자동 저장 전 수동 저장)
+- **편집 완료**: "편집 완료" 버튼 클릭 → `/projects/[id]/publish`로 라우팅
+- **대주제별 필터링**: 타임라인 이벤트 선택 시 해당 소주제만 자동 필터링
+- **본문 저장 시 요약 자동 갱신**: 섹션 내용 저장 시 excerpt 자동 업데이트
+
+#### 3. 소단락 (Subsections) 관리
+- `Section` 타입에 `subsections` 필드 추가
+- 음성/파일 입력 시 AI가 자동으로 소단락 생성
+- 각 소단락은 개별 편집 가능 (향후 구현 예정)
 
 ### 레이아웃 구조
 
@@ -273,6 +300,133 @@ type ProcessingState = {
 - 대비비 7:1 이상 유지
 - 포커스 링 색상: 딥그린 (`#2BA08C`)
 
+## 출판 플로우 (Publishing Flow) ⭐ 신규 추가
+
+### 개요
+편집 완료 후 사용자가 실물책/전자책/오디오북을 선택하고 제작을 의뢰할 수 있는 3단계 마법사 UI입니다.
+
+### 라우트
+- **경로**: `/projects/[projectId]/publish`
+- **진입점**: 편집 페이지에서 "편집 완료" 버튼 클릭
+
+### 3단계 마법사 구조
+
+#### 1단계: 출판 방식 선택
+**UI 구성**:
+- 실물책/전자책/오디오북 카드형 멀티 선택
+- 각 옵션별 아이콘, 제목, 설명
+- 멀티 선택 가능 (여러 형식 동시 제작 가능)
+- 우측 사이드 패널: 선택된 옵션 요약
+
+**옵션**:
+- **실물책** (🖨️ Printer Icon)
+  - 하드커버 / 소프트커버 선택
+  - 수량 지정
+  - 선물용 포장 옵션
+- **전자책** (📖 BookOpen Icon)
+  - EPUB / PDF / 둘 다
+  - 공유 범위 (비공개/가족/공개)
+  - 사진 포함 여부
+- **오디오북** (🎧 Headphones Icon)
+  - 내레이터 타입 (전문 성우/가족 음성/TTS)
+  - 예상 러닝타임 (30분/45분/60분)
+  - 배경 음악 포함 여부
+
+#### 2단계: 세부 정보 설정
+**동적 폼 렌더링**:
+- 1단계에서 선택된 옵션에 따라 폼 구성
+- 각 옵션별 세부 설정 입력
+- 실시간 비용 힌트 제공
+
+**실물책 설정**:
+```typescript
+{
+  trimSize: "148x210" | "152x225" | "A5",  // 판형
+  coverType: "hard" | "soft",               // 커버 타입
+  quantity: number,                         // 수량
+  giftWrap: boolean                         // 선물 포장
+}
+```
+
+**전자책 설정**:
+```typescript
+{
+  format: "epub" | "pdf" | "both",         // 파일 형식
+  distribution: "private" | "family" | "public",  // 공유 범위
+  includePhotos: boolean                   // 사진 포함
+}
+```
+
+**오디오북 설정**:
+```typescript
+{
+  narrator: "professional" | "family" | "tts",  // 내레이터
+  duration: "30" | "45" | "60",                 // 러닝타임 (분)
+  includeBgm: boolean                           // 배경 음악
+}
+```
+
+#### 3단계: 견적 및 다음 단계
+**UI 구성**:
+- 선택된 옵션별 항목 요약
+- 예상 비용 계산 (동적)
+- 예상 제작 일정
+- CTA 버튼: "상담 신청" / "제작 요청"
+- 보조 액션: "이야기 다시 보기" / "처음으로"
+
+**견적 계산 로직** (목업):
+```typescript
+const baseCosts = {
+  print: {
+    hard: 50000,
+    soft: 30000,
+    perCopy: 15000,
+  },
+  ebook: {
+    epub: 20000,
+    pdf: 15000,
+    both: 30000,
+  },
+  audio: {
+    professional: 100000,
+    family: 50000,
+    tts: 30000,
+  }
+};
+```
+
+### 컴포넌트 구조
+```
+PublishingFlow (components/publishing-flow.tsx)
+├─ Step 1: OptionSelection
+│   ├─ OptionCard (실물책)
+│   ├─ OptionCard (전자책)
+│   ├─ OptionCard (오디오북)
+│   └─ SelectedSummaryPanel
+├─ Step 2: DetailsForm
+│   ├─ PrintDetailsForm
+│   ├─ EbookDetailsForm
+│   └─ AudioDetailsForm
+└─ Step 3: ReviewAndEstimate
+    ├─ SelectedOptionsReview
+    ├─ CostBreakdown
+    └─ NextStepsActions
+```
+
+### 상태 관리
+```typescript
+const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
+const [selectedOptions, setSelectedOptions] = useState<PublishOption[]>([]);
+const [details, setDetails] = useState<PublishingDetails>(DEFAULT_DETAILS);
+```
+
+### 향후 확장 계획
+- 백엔드 API 연동 (`/api/publish/estimate`, `/api/publish/request`)
+- 실제 결제 시스템 통합 (토스페이먼츠, 아임포트 등)
+- 제작 진행 상황 대시보드
+- 알림 시스템 (이메일/SMS)
+- 파일 다운로드 기능
+
 ### 목업 API (lib/mock-api.ts)
 
 실제 API 구현 전까지 사용할 목업 함수:
@@ -281,6 +435,12 @@ type ProcessingState = {
 - `saveSection(sectionId, content)`: Promise<void>
 - `uploadAudio(file)`: Promise<{assetId:string}>
 - `processAudio(assetId)`: AsyncGenerator<ProcessingState>
+- ⭐ `createTimelineEvent(input)`: Promise<TimelineEvent> - 신규 추가
+- ⭐ `updateTimelineEvent(eventId, updates)`: Promise<TimelineEvent> - 신규 추가
+- ⭐ `createSection(input)`: Promise<Section> - 신규 추가
+- ⭐ `analyzeTranscriptToSubsections(transcript)`: Promise<Subsection[]> - 신규 추가
+- ⭐ `reorderTimelineEvents(eventIds)`: Promise<void> - 순서 변경
+- ⭐ `reorderSections(sectionIds)`: Promise<void> - 순서 변경
 
 모든 함수는 실제와 유사한 지연(delay)을 포함하여 로딩/에러/완료 상태를 확인할 수 있습니다.
 
@@ -291,22 +451,30 @@ type ProcessingState = {
 - ✅ 기본 UI/UX 컴포넌트
 - ✅ 시니어 친화적 순서 변경 기능 (드래그 앤 드롭 + 버튼)
 - ✅ 편집 페이지 3열 레이아웃
+- ✅ 대주제/소주제 CRUD 기능
+- ✅ 3가지 입력 방식 (텍스트/음성/파일)
+- ✅ 출판 플로우 UI (3단계 마법사)
+- ✅ 출판 옵션 견적 계산
 - 🔄 세션 기반 인터뷰 시스템
-- 🔄 음성 녹음 기능
-- 🔄 텍스트 변환 (STT)
+- 🔄 음성 녹음 실제 구현
+- 🔄 텍스트 변환 (STT) API 연동
 
 ### Phase 2 (예정)
-- OpenAI Whisper API 연동
-- GPT-4 기반 자서전 생성
-- 챕터 구조화
+- OpenAI Whisper API 연동 (STT)
+- GPT-4 기반 자서전 생성 및 요약
+- 소단락 자동 생성 및 편집 UI
 - 텍스트 크기 조절 기능 (시니어 접근성)
 - 고대비 테마 옵션
+- 출판 백엔드 API 연동
+- 결제 시스템 통합
 
 ### Phase 3 (예정)
 - 음성 클로닝 (OpenVoice/ElevenLabs)
-- TTS 오디오북 생성
-- PDF 내보내기
+- TTS 오디오북 실제 생성
+- PDF/EPUB 생성 및 다운로드
+- 실물책 주문/배송 시스템
 - 가족 협업 기능
+- 제작 진행 상황 대시보드
 
 ### Phase 4 (예정)
 - B2B 기능 (복지관, 교육기관)
@@ -379,7 +547,7 @@ interface Chapter {
   id: string;
   projectId: string;
   title: string;
-  description?: string;
+  description?: string; // ⭐ 메모/설명 추가 (2025-01-06)
   order: number;
   sessions: Session[];
   status: 'not_started' | 'in_progress' | 'completed';
@@ -425,6 +593,12 @@ interface TextBlock {
   comments: Comment[];
   createdAt: Date;
   updatedAt: Date;
+  subsections?: Array<{  // ⭐ 소단락 관리 (2025-01-06)
+    id: string;
+    title: string;
+    content: string;
+    sourceType: 'text' | 'voice' | 'file';
+  }>;
 }
 
 // 협업용 코멘트
@@ -488,14 +662,15 @@ interface User {
 ├── /auth
 │   ├── /login                    # 로그인
 │   └── /signup                   # 회원가입
-├── /dashboard                    # 메인 대시보드
+├── /dashboard                    # 메인 대시보드 (✅ 구현됨)
 ├── /projects
 │   ├── /new                      # 새 프로젝트 생성
 │   └── /[projectId]
 │       ├── /                     # 프로젝트 홈 (챕터 목록)
 │       ├── /chapter/[chapterId]
 │       │   └── /session/[sessionId]  # 인터뷰 세션
-│       ├── /edit                 # 편집 모드
+│       ├── /edit                 # 편집 모드 (✅ 구현됨)
+│       ├── /publish              # ⭐ 출판 준비 (✅ 구현됨)
 │       └── /preview              # 미리보기
 ├── /export
 │   ├── /pdf                      # PDF 다운로드
@@ -826,7 +1001,7 @@ npm run build
 
 ---
 
-**마지막 업데이트**: 2025-01-06
+**마지막 업데이트**: 2025-11-04
 **프로젝트 상태**: MVP 개발 중 (Phase 1)
 
 **주요 업데이트**:
@@ -835,11 +1010,23 @@ npm run build
 - ESLint 8 → 9
 - Turbopack 프로덕션 빌드 지원
 - ⭐ 편집 페이지 완전 구현 (edit.md 기반)
-- ⭐ **시니어 친화적 UX 개선** (2025-01-06)
+- ⭐ **시니어 친화적 UX 개선**
   - @dnd-kit 설치 및 통합
   - 타임라인 & 섹션 순서 변경 기능 (하이브리드 방식)
   - 버튼식 이동 (시니어 최우선) + 드래그 앤 드롭 (고급 사용자)
   - 큰 터치 타겟, 명확한 피드백, 접근성 강화
+- ⭐ **대주제/소주제 CRUD 기능** (2025-11-04)
+  - 대주제 추가/수정 모달 및 목업 API
+  - 소주제 3가지 입력 방식 (텍스트/음성/파일)
+  - AddSectionModal 컴포넌트 분리 및 검증 로직
+  - 대주제별 소주제 자동 필터링
+  - 소단락(subsections) 데이터 모델 추가
+- ⭐ **출판 플로우 구현** (2025-11-04)
+  - /projects/[projectId]/publish 라우트 추가
+  - PublishingFlow 3단계 마법사 컴포넌트
+  - 실물책/전자책/오디오북 옵션 및 세부 설정
+  - 동적 견적 계산 로직
+  - 편집 완료 → 출판 준비 플로우 연결
 
 **최근 추가된 기획 내용**:
 - 세션 기반 인터뷰 시스템 아키텍처
@@ -848,9 +1035,10 @@ npm run build
 - 자동 저장 및 오프라인 지원 전략
 - 시니어 친화적 UX 플로우
 - 추천 라이브러리 목록 (@dnd-kit, Supabase, Zustand 등)
+- 출판 플로우 고도화 제안 (백엔드 API, 결제 시스템, 비동기 처리)
 
 **최근 구현된 기능**:
-- ✅ App Router 기반 라우팅 구조 (/, /dashboard, /projects/[id]/edit)
+- ✅ App Router 기반 라우팅 구조 (/, /dashboard, /projects/[id]/edit, /projects/[id]/publish)
 - ✅ 편집 페이지 3열 레이아웃 (타임라인 + 섹션 리스트 + 에디터 + 녹음 패널)
 - ✅ 다크 + 딥그린 디자인 시스템 적용
 - ✅ 목업 API 함수 (실제 API 연동 준비 완료)
@@ -860,3 +1048,18 @@ npm run build
   - 섹션 리스트 순서 변경 (세로 이동)
   - @dnd-kit 라이브러리 활용
   - 큰 버튼, 명확한 라벨, 접근성 지원
+- ✅ **대주제/소주제 CRUD 기능** (2025-11-04)
+  - 대주제 추가/수정 모달
+  - 소주제 3가지 입력 방식 (텍스트/음성/파일)
+  - AddSectionModal 컴포넌트 분리
+  - 대주제별 소주제 자동 필터링
+- ✅ **출판 플로우** (2025-11-04)
+  - 3단계 마법사 UI (옵션 선택 → 세부 설정 → 견적)
+  - 실물책/전자책/오디오북 멀티 선택
+  - 동적 견적 계산
+  - PublishingFlow 컴포넌트
+- ✅ **편집 워크플로우 개선** (2025-11-04)
+  - 임시 저장/편집 완료 버튼
+  - 본문 저장 시 요약 자동 갱신
+  - 소단락(subsections) 관리
+  - 음성/파일 업로드 플레이스홀더 처리

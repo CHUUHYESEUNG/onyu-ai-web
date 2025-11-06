@@ -22,18 +22,6 @@ export function Navigation() {
             소개
           </Link>
           <Link
-            href="/#features"
-            className="text-sm text-[#E6F0ED]/70 transition-colors hover:text-[#2BA08C]"
-          >
-            예시
-          </Link>
-          <Link
-            href="/#guide"
-            className="text-sm text-[#E6F0ED]/70 transition-colors hover:text-[#2BA08C]"
-          >
-            가이드
-          </Link>
-          <Link
             href="/dashboard"
             className="text-sm font-medium text-[#2BA08C] transition-colors hover:text-[#E6F0ED]"
           >
