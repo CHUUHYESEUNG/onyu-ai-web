@@ -1,12 +1,20 @@
 "use client";
 
+import Image from "next/image";
+
 export function Footer() {
   return (
     <footer className="border-t border-[#1F6F63]/20 bg-[#0B0F0E] py-12">
       <div className="mx-auto max-w-7xl px-6">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
           <div>
-            <h4 className="mb-4 text-[#E6F0ED]">Onyu.ai</h4>
+            <Image
+              src="/logo/oy_logo_white.png"
+              alt="Onyu.ai 로고"
+              width={70}
+              height={16}
+              className="mb-4"
+            />
             <p className="text-sm text-[#E6F0ED]/60">당신의 목소리가 한 편의 이야기로.</p>
           </div>
 
