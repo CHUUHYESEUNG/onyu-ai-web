@@ -54,11 +54,11 @@ export function SectionList({ sections, selectedSectionId, onSectionSelect, onRe
   );
 
   return (
-    <div className="flex flex-col h-full bg-[#0B0F0E] border-r border-[#1F6F63]/30">
+    <div className="flex flex-col h-full bg-navy-900 border-r border-navy-700/30">
       {/* 검색 */}
-      <div className="p-4 border-b border-[#1F6F63]/30">
+      <div className="p-4 border-b border-navy-700/30">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#A8C3BC]" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#a0a3b1]" />
           <input
             type="text"
             placeholder="섹션 검색..."
@@ -66,9 +66,9 @@ export function SectionList({ sections, selectedSectionId, onSectionSelect, onRe
             onChange={(e) => setSearchQuery(e.target.value)}
             className="
               w-full pl-10 pr-4 py-2
-              bg-[#0E1513] text-[#E6F0ED] placeholder-[#A8C3BC]/50
-              border border-[#1F6F63]/30 rounded-lg
-              focus:outline-none focus:border-[#2BA08C] focus:ring-1 focus:ring-[#2BA08C]
+              bg-card text-[#e4e6eb] placeholder:text-[#7a7d8c]
+              border border-navy-700 rounded-lg
+              focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/50
               transition-colors
             "
           />
@@ -78,7 +78,7 @@ export function SectionList({ sections, selectedSectionId, onSectionSelect, onRe
       {/* 섹션 리스트 */}
       <div className="flex-1 overflow-y-auto">
         {filteredSections.length === 0 ? (
-          <div className="p-4 text-center text-[#A8C3BC]/60 text-sm">섹션이 없습니다.</div>
+          <div className="p-4 text-center text-[#a0a3b1]/60 text-sm">섹션이 없습니다.</div>
         ) : (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={filteredSections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
@@ -140,19 +140,19 @@ function SectionListItem({
         onClick={() => onSelect(section.id)}
         className={`
           w-full text-left p-3 rounded-lg transition-all
-          focus:outline-none focus:ring-2 focus:ring-[#2BA08C]
+          focus:outline-none focus:ring-2 focus:ring-accent/50
           cursor-move
           ${
             isSelected
-              ? 'bg-[#1F6F63]/20 border-l-4 border-[#2BA08C]'
-              : 'hover:bg-[#0E1513] border-l-4 border-transparent'
+              ? 'bg-accent/10 border-l-4 border-accent'
+              : 'hover:bg-card border-l-4 border-transparent'
           }
         `}
         {...attributes}
         {...listeners}
       >
-        <div className="font-semibold text-[#E6F0ED] mb-1">{section.title}</div>
-        <div className="text-sm text-[#A8C3BC] line-clamp-2">{section.excerpt}</div>
+        <div className="font-semibold text-[#e4e6eb] mb-1">{section.title}</div>
+        <div className="text-sm text-[#a0a3b1] line-clamp-2">{section.excerpt}</div>
       </button>
 
       {/* 이동 버튼 */}
@@ -166,11 +166,11 @@ function SectionListItem({
           className="
             flex-1 flex items-center justify-center gap-2
             px-4 py-3 text-base font-medium
-            bg-[#1F6F63] hover:bg-[#2BA08C]
-            text-[#E6F0ED]
+            bg-navy-700 hover:bg-accent
+            text-[#e4e6eb]
             rounded-lg transition-colors
             disabled:opacity-30 disabled:cursor-not-allowed
-            focus:outline-none focus:ring-2 focus:ring-[#2BA08C]
+            focus:outline-none focus:ring-2 focus:ring-accent
           "
           aria-label={`${section.title} 위로 이동`}
           title="위로 이동"
@@ -188,11 +188,11 @@ function SectionListItem({
           className="
             flex-1 flex items-center justify-center gap-2
             px-4 py-3 text-base font-medium
-            bg-[#1F6F63] hover:bg-[#2BA08C]
-            text-[#E6F0ED]
+            bg-navy-700 hover:bg-accent
+            text-[#e4e6eb]
             rounded-lg transition-colors
             disabled:opacity-30 disabled:cursor-not-allowed
-            focus:outline-none focus:ring-2 focus:ring-[#2BA08C]
+            focus:outline-none focus:ring-2 focus:ring-accent
           "
           aria-label={`${section.title} 아래로 이동`}
           title="아래로 이동"

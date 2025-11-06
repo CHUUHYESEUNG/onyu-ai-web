@@ -58,10 +58,10 @@ export function AddSectionModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      <div className="absolute inset-0 bg-black/60" onClick={handleClose} />
-      <div className="relative z-10 w-full max-w-lg rounded-2xl border border-[#2BA08C]/30 bg-[#0E1513] p-6 shadow-2xl">
-        <h2 className="text-xl font-semibold text-[#E6F0ED]">새로운 소주제 추가</h2>
-        <p className="mt-1 text-sm text-[#A8C3BC]/70">대주제 안에 세부 이야기를 추가하고 바로 편집할 수 있습니다.</p>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={handleClose} />
+      <div className="relative z-10 w-full max-w-lg rounded-2xl border border-accent/30 bg-card p-6 shadow-2xl shadow-black/50">
+        <h2 className="text-xl font-semibold text-[#e4e6eb]">새로운 소주제 추가</h2>
+        <p className="mt-1 text-sm text-[#a0a3b1]">대주제 안에 세부 이야기를 추가하고 바로 편집할 수 있습니다.</p>
         <div className="mt-6 space-y-4">
           <label className="space-y-2 text-sm text-[#E6F0ED]/70">
             대주제 선택

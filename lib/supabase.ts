@@ -10,6 +10,7 @@ import type { Database } from '@/types/database';
 // 환경 변수 검증
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error(
@@ -44,6 +45,8 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
  * 서버 사이드 전용 Supabase 클라이언트 (Service Role)
  * Route Handler에서 RLS 우회가 필요한 경우 사용
  *
+ * ⚠️ 주의: 서버 사이드(API Route, Server Component)에서만 사용하세요!
+ *
  * @example
  * import { supabaseAdmin } from '@/lib/supabase';
  *
@@ -54,7 +57,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
  */
 export const supabaseAdmin = createClient<Database>(
   supabaseUrl,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+  supabaseServiceRoleKey || supabaseAnonKey, // 클라이언트에서는 anon key 사용
   {
     auth: {
       autoRefreshToken: false,

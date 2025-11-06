@@ -44,12 +44,12 @@ export function TimelineBar({ events, selectedEventId, onEventSelect, onReorder 
     }
   };
   return (
-    <div className="w-full bg-[#0E1513] border-b border-[#1F6F63]/30 px-6 py-6">
+    <div className="w-full bg-card border-b border-navy-700/30 px-6 py-6">
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={events.map((e) => e.id)} strategy={horizontalListSortingStrategy}>
           <div className="relative flex items-start gap-8 overflow-x-auto pb-2 justify-center min-w-full" role="tablist">
             {/* 점선 */}
-            <div className="absolute top-8 left-8 right-8 h-[2px] border-t-2 border-dashed border-[#1F6F63]/40 pointer-events-none" />
+            <div className="absolute top-8 left-8 right-8 h-[2px] border-t-2 border-dashed border-navy-700/40 pointer-events-none" />
 
             {events.map((event, index) => (
               <TimelineEventItem
@@ -109,11 +109,11 @@ function TimelineEventItem({
             onMoveLeft();
           }}
           disabled={isFirst}
-          className="px-2 py-1 rounded bg-[#1F6F63] hover:bg-[#2BA08C] disabled:opacity-30 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#2BA08C]"
+          className="px-2 py-1 rounded bg-navy-700 hover:bg-accent disabled:opacity-30 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-accent"
           aria-label={`${event.label} 왼쪽으로 이동`}
           title="왼쪽으로"
         >
-          <ChevronLeft className="h-3 w-3 text-[#E6F0ED]" />
+          <ChevronLeft className="h-3 w-3 text-[#e4e6eb]" />
         </button>
         <button
           onClick={(e) => {
@@ -121,11 +121,11 @@ function TimelineEventItem({
             onMoveRight();
           }}
           disabled={isLast}
-          className="px-2 py-1 rounded bg-[#1F6F63] hover:bg-[#2BA08C] disabled:opacity-30 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-[#2BA08C]"
+          className="px-2 py-1 rounded bg-navy-700 hover:bg-accent disabled:opacity-30 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-accent"
           aria-label={`${event.label} 오른쪽으로 이동`}
           title="오른쪽으로"
         >
-          <ChevronRight className="h-3 w-3 text-[#E6F0ED]" />
+          <ChevronRight className="h-3 w-3 text-[#e4e6eb]" />
         </button>
       </div>
 
@@ -141,12 +141,12 @@ function TimelineEventItem({
             relative z-10 w-8 h-8 rounded-full transition-all flex items-center justify-center
             ${
               isSelected
-                ? 'bg-[#2BA08C] ring-4 ring-[#2BA08C]/30 scale-110'
+                ? 'bg-accent ring-4 ring-accent/30 scale-110'
                 : event.status === 'done'
-                  ? 'bg-[#1F6F63] border-2 border-[#2BA08C]'
-                  : 'bg-[#0E1513] border-2 border-[#1F6F63]'
+                  ? 'bg-navy-700 border-2 border-accent'
+                  : 'bg-card border-2 border-navy-700'
             }
-            group-hover:scale-110 group-focus:ring-4 group-focus:ring-[#2BA08C]/50
+            group-hover:scale-110 group-focus:ring-4 group-focus:ring-accent/50
             cursor-move
           `}
         >
@@ -159,12 +159,12 @@ function TimelineEventItem({
         <div
           className={`
             text-base font-medium transition-colors
-            ${isSelected ? 'text-[#2BA08C]' : 'text-[#A8C3BC]'}
+            ${isSelected ? 'text-accent' : 'text-[#a0a3b1]'}
           `}
         >
           {event.label}
         </div>
-        {event.date && <div className="text-xs text-[#A8C3BC]/60 mt-1">{event.date}</div>}
+        {event.date && <div className="text-xs text-[#a0a3b1]/60 mt-1">{event.date}</div>}
       </div>
     </div>
   );

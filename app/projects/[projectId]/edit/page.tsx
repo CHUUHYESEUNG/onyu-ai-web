@@ -368,20 +368,20 @@ export default function EditPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0B0F0E] flex items-center justify-center">
-        <div className="text-[#A8C3BC]">로딩 중...</div>
+      <div className="min-h-screen bg-navy-900 flex items-center justify-center">
+        <div className="text-[#a0a3b1]">로딩 중...</div>
       </div>
     );
   }
 
   return (
     <>
-      <div className="min-h-screen bg-[#0B0F0E] flex flex-col">
-      <header className="border-b border-[#1F6F63]/20 bg-[#0F3D35]/30">
+      <div className="min-h-screen bg-navy-900 flex flex-col">
+      <header className="border-b border-navy-700 bg-navy-800/30">
         <div className="mx-auto flex w-full max-w-[1400px] items-center justify-between px-6 py-4">
           <div>
-            <p className="text-xs uppercase tracking-wide text-[#2BA08C]/80">프로젝트</p>
-            <h1 className="text-lg font-semibold text-[#E6F0ED]">
+            <p className="text-xs uppercase tracking-wide text-accent/80">프로젝트</p>
+            <h1 className="text-lg font-semibold text-[#e4e6eb]">
               #{params?.projectId ?? '프로젝트'} 이야기 편집
             </h1>
           </div>
@@ -390,7 +390,7 @@ export default function EditPage() {
               variant="outline"
               onClick={handleTemporarySave}
               disabled={isSaving}
-              className="border-[#2BA08C]/40 bg-transparent text-[#E6F0ED]"
+              className="border-navy-700 bg-transparent text-[#e4e6eb]"
             >
               {isSaving ? '임시 저장 중...' : '임시 저장'}
             </Button>
@@ -400,11 +400,11 @@ export default function EditPage() {
       </header>
 
       {/* 타임라인 헤더 */}
-      <div className="border-b border-[#1F6F63]/30 bg-[#0E1513]">
+      <div className="border-b border-navy-700 bg-card">
         <div className="mx-auto flex w-full max-w-[1400px] items-center justify-between px-6 py-3">
           <div>
-            <p className="text-xs uppercase tracking-wide text-[#A8C3BC]/70">대주제 타임라인</p>
-            <p className="text-sm text-[#E6F0ED]/70">
+            <p className="text-xs uppercase tracking-wide text-[#a0a3b1]">대주제 타임라인</p>
+            <p className="text-sm text-[#e4e6eb]/70">
               인생의 주요 사건들을 순서대로 정리하고 필요 시 드래그로 순서를 조정하세요.
             </p>
           </div>
@@ -413,11 +413,11 @@ export default function EditPage() {
               variant="outline"
               onClick={openEditEventModal}
               disabled={!selectedEventId}
-              className="border-[#2BA08C]/40 text-[#E6F0ED] disabled:opacity-40 disabled:cursor-not-allowed"
+              className="border-navy-700 text-[#e4e6eb] disabled:opacity-40 disabled:cursor-not-allowed"
             >
               대주제 수정
             </Button>
-            <Button variant="outline" onClick={openAddEventModal} className="border-[#2BA08C]/40 text-[#E6F0ED]">
+            <Button variant="outline" onClick={openAddEventModal} className="border-navy-700 text-[#e4e6eb]">
               <Plus className="mr-2 h-4 w-4" />
               대주제 추가
             </Button>
@@ -440,12 +440,12 @@ export default function EditPage() {
           <div className="col-span-3 flex h-full flex-col">
             <div className="mb-3 flex items-center justify-between px-2">
               <div>
-                <p className="text-xs uppercase tracking-wide text-[#A8C3BC]/70">소주제 목록</p>
-                <p className="text-[11px] text-[#A8C3BC]/50">
+                <p className="text-xs uppercase tracking-wide text-[#a0a3b1]">소주제 목록</p>
+                <p className="text-[11px] text-[#7a7d8c]">
                   현재 선택된 대주제에 속한 소주제를 관리합니다.
                 </p>
               </div>
-              <Button size="sm" variant="outline" onClick={openAddSectionModeModal} className="border-[#2BA08C]/40 text-[#E6F0ED]">
+              <Button size="sm" variant="outline" onClick={openAddSectionModeModal} className="border-navy-700 text-[#e4e6eb]">
                 <Plus className="mr-1 h-4 w-4" />
                 소주제 추가
               </Button>
@@ -483,14 +483,14 @@ export default function EditPage() {
       </div>
       {isAddEventOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setIsAddEventOpen(false)} />
-          <div className="relative z-10 w-full max-w-md rounded-2xl border border-[#2BA08C]/30 bg-[#0E1513] p-6 shadow-2xl">
-            <h2 className="text-xl font-semibold text-[#E6F0ED]">새로운 대주제 추가</h2>
-            <p className="mt-1 text-sm text-[#A8C3BC]/70">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsAddEventOpen(false)} />
+          <div className="relative z-10 w-full max-w-md rounded-2xl border border-accent/30 bg-card p-6 shadow-2xl shadow-black/50">
+            <h2 className="text-xl font-semibold text-[#e4e6eb]">새로운 대주제 추가</h2>
+            <p className="mt-1 text-sm text-[#a0a3b1]">
               인생의 중요한 사건을 추가하면 타임라인에 새 챕터가 생성됩니다.
             </p>
             <div className="mt-6 space-y-4">
-              <label className="space-y-2 text-sm text-[#E6F0ED]/70">
+              <label className="space-y-2 text-sm text-[#a0a3b1]">
                 대주제 이름
                 <input
                   type="text"
@@ -499,29 +499,29 @@ export default function EditPage() {
                     setEventForm((prev) => ({ ...prev, label: e.target.value }));
                     setEventError(null);
                   }}
-                  className="w-full rounded-lg border border-[#1F6F63]/40 bg-[#0B1412] px-4 py-2 text-[#E6F0ED] focus:border-[#2BA08C] focus:outline-none focus:ring-1 focus:ring-[#2BA08C]"
+                  className="w-full rounded-lg border border-navy-700 bg-navy-900 px-4 py-2 text-[#e4e6eb] placeholder:text-[#7a7d8c] focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50"
                   placeholder="예: 첫 직장에 입사하다"
                 />
               </label>
 
-              <label className="space-y-2 text-sm text-[#E6F0ED]/70">
+              <label className="space-y-2 text-sm text-[#a0a3b1]">
                 날짜/기간 (선택)
                 <input
                   type="text"
                   value={eventForm.date}
                   onChange={(e) => setEventForm((prev) => ({ ...prev, date: e.target.value }))}
-                  className="w-full rounded-lg border border-[#1F6F63]/40 bg-[#0B1412] px-4 py-2 text-[#E6F0ED] focus:border-[#2BA08C] focus:outline-none focus:ring-1 focus:ring-[#2BA08C]"
+                  className="w-full rounded-lg border border-navy-700 bg-navy-900 px-4 py-2 text-[#e4e6eb] placeholder:text-[#7a7d8c] focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50"
                   placeholder="예: 1985년 3월"
                 />
               </label>
 
-              <label className="space-y-2 text-sm text-[#E6F0ED]/70">
+              <label className="space-y-2 text-sm text-[#a0a3b1]">
                 메모 (선택)
                 <textarea
                   value={eventForm.description}
                   onChange={(e) => setEventForm((prev) => ({ ...prev, description: e.target.value }))}
                   rows={3}
-                  className="w-full rounded-lg border border-[#1F6F63]/40 bg-[#0B1412] px-4 py-2 text-[#E6F0ED] focus:border-[#2BA08C] focus:outline-none focus:ring-1 focus:ring-[#2BA08C]"
+                  className="w-full rounded-lg border border-navy-700 bg-navy-900 px-4 py-2 text-[#e4e6eb] placeholder:text-[#7a7d8c] focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50"
                   placeholder="이 시기의 대표적인 에피소드나 감정 등을 기록해 보세요."
                 />
               </label>
@@ -529,7 +529,7 @@ export default function EditPage() {
               {eventError && <p className="text-sm text-red-400">{eventError}</p>}
             </div>
             <div className="mt-6 flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsAddEventOpen(false)} className="border-[#2BA08C]/30 text-[#E6F0ED]">
+              <Button variant="outline" onClick={() => setIsAddEventOpen(false)} className="border-navy-700 text-[#e4e6eb]">
                 취소
               </Button>
               <Button onClick={handleCreateEvent} disabled={isCreatingEvent}>
@@ -543,10 +543,10 @@ export default function EditPage() {
 
       {isAddSectionModeOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setIsAddSectionModeOpen(false)} />
-          <div className="relative z-10 w-full max-w-md rounded-2xl border border-[#2BA08C]/30 bg-[#0E1513] p-6 shadow-2xl">
-            <h2 className="text-xl font-semibold text-[#E6F0ED]">소주제 입력 방식 선택</h2>
-            <p className="mt-1 text-sm text-[#A8C3BC]/70">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsAddSectionModeOpen(false)} />
+          <div className="relative z-10 w-full max-w-md rounded-2xl border border-accent/30 bg-card p-6 shadow-2xl shadow-black/50">
+            <h2 className="text-xl font-semibold text-[#e4e6eb]">소주제 입력 방식 선택</h2>
+            <p className="mt-1 text-sm text-[#a0a3b1]">
               새로운 소주제를 어떻게 기록할지 선택해주세요. 언제든 다른 방식을 다시 선택할 수 있습니다.
             </p>
             <div className="mt-6 space-y-3">
@@ -555,13 +555,13 @@ export default function EditPage() {
                   openAddSectionModalForMode('text');
                   setIsAddSectionModeOpen(false);
                 }}
-                className="w-full rounded-xl border border-[#1F6F63]/30 bg-[#0B1412] px-4 py-3 text-left text-[#E6F0ED] transition-colors hover:border-[#2BA08C]/60"
+                className="w-full rounded-xl border border-navy-700 bg-navy-900 px-4 py-3 text-left text-[#e4e6eb] transition-colors hover:border-accent/60 hover:bg-card-hover"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold">텍스트로 작성</span>
-                  <span className="text-xs text-[#A8C3BC]/60">추천</span>
+                  <span className="text-xs text-accent">추천</span>
                 </div>
-                <p className="mt-1 text-xs text-[#A8C3BC]/70">직접 입력하면서 내용을 정리합니다.</p>
+                <p className="mt-1 text-xs text-[#7a7d8c]">직접 입력하면서 내용을 정리합니다.</p>
               </button>
 
               <button
@@ -569,12 +569,12 @@ export default function EditPage() {
                   openAddSectionModalForMode('voice');
                   setIsAddSectionModeOpen(false);
                 }}
-                className="w-full rounded-xl border border-[#1F6F63]/30 bg-[#0B1412] px-4 py-3 text-left text-[#E6F0ED] transition-colors hover:border-[#2BA08C]/60"
+                className="w-full rounded-xl border border-navy-700 bg-navy-900 px-4 py-3 text-left text-[#e4e6eb] transition-colors hover:border-accent/60 hover:bg-card-hover"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold">음성으로 작성</span>
                 </div>
-                <p className="mt-1 text-xs text-[#A8C3BC]/70">말로 기록하고 AI가 소단락으로 정리해줍니다.</p>
+                <p className="mt-1 text-xs text-[#7a7d8c]">말로 기록하고 AI가 소단락으로 정리해줍니다.</p>
               </button>
 
               <button
@@ -582,16 +582,16 @@ export default function EditPage() {
                   openAddSectionModalForMode('file');
                   setIsAddSectionModeOpen(false);
                 }}
-                className="w-full rounded-xl border border-[#1F6F63]/30 bg-[#0B1412] px-4 py-3 text-left text-[#E6F0ED] transition-colors hover:border-[#2BA08C]/60"
+                className="w-full rounded-xl border border-navy-700 bg-navy-900 px-4 py-3 text-left text-[#e4e6eb] transition-colors hover:border-accent/60 hover:bg-card-hover"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold">파일 가져오기</span>
                 </div>
-                <p className="mt-1 text-xs text-[#A8C3BC]/70">음성/텍스트 파일을 업로드하면 자동으로 정리됩니다.</p>
+                <p className="mt-1 text-xs text-[#7a7d8c]">음성/텍스트 파일을 업로드하면 자동으로 정리됩니다.</p>
               </button>
             </div>
             <div className="mt-6 flex justify-end">
-              <Button variant="outline" onClick={() => setIsAddSectionModeOpen(false)} className="border-[#2BA08C]/30 text-[#E6F0ED]">
+              <Button variant="outline" onClick={() => setIsAddSectionModeOpen(false)} className="border-navy-700 text-[#e4e6eb]">
                 닫기
               </Button>
             </div>
@@ -601,14 +601,14 @@ export default function EditPage() {
 
       {isEditEventOpen && selectedEventId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setIsEditEventOpen(false)} />
-          <div className="relative z-10 w-full max-w-md rounded-2xl border border-[#2BA08C]/30 bg-[#0E1513] p-6 shadow-2xl">
-            <h2 className="text-xl font-semibold text-[#E6F0ED]">대주제 수정</h2>
-            <p className="mt-1 text-sm text-[#A8C3BC]/70">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsEditEventOpen(false)} />
+          <div className="relative z-10 w-full max-w-md rounded-2xl border border-accent/30 bg-card p-6 shadow-2xl shadow-black/50">
+            <h2 className="text-xl font-semibold text-[#e4e6eb]">대주제 수정</h2>
+            <p className="mt-1 text-sm text-[#a0a3b1]">
               잘못 입력된 정보를 수정하거나 보조 설명을 업데이트할 수 있습니다.
             </p>
             <div className="mt-6 space-y-4">
-              <label className="space-y-2 text-sm text-[#E6F0ED]/70">
+              <label className="space-y-2 text-sm text-[#a0a3b1]">
                 대주제 이름
                 <input
                   type="text"
@@ -617,29 +617,29 @@ export default function EditPage() {
                     setEditEventForm((prev) => ({ ...prev, label: e.target.value }));
                     setEditEventError(null);
                   }}
-                  className="w-full rounded-lg border border-[#1F6F63]/40 bg-[#0B1412] px-4 py-2 text-[#E6F0ED] focus:border-[#2BA08C] focus:outline-none focus:ring-1 focus:ring-[#2BA08C]"
+                  className="w-full rounded-lg border border-navy-700 bg-navy-900 px-4 py-2 text-[#e4e6eb] placeholder:text-[#7a7d8c] focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50"
                   placeholder="예: 첫 직장에 입사하다"
                 />
               </label>
 
-              <label className="space-y-2 text-sm text-[#E6F0ED]/70">
+              <label className="space-y-2 text-sm text-[#a0a3b1]">
                 날짜/기간 (선택)
                 <input
                   type="text"
                   value={editEventForm.date}
                   onChange={(e) => setEditEventForm((prev) => ({ ...prev, date: e.target.value }))}
-                  className="w-full rounded-lg border border-[#1F6F63]/40 bg-[#0B1412] px-4 py-2 text-[#E6F0ED] focus:border-[#2BA08C] focus:outline-none focus:ring-1 focus:ring-[#2BA08C]"
+                  className="w-full rounded-lg border border-navy-700 bg-navy-900 px-4 py-2 text-[#e4e6eb] placeholder:text-[#7a7d8c] focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50"
                   placeholder="예: 1985년 3월"
                 />
               </label>
 
-              <label className="space-y-2 text-sm text-[#E6F0ED]/70">
+              <label className="space-y-2 text-sm text-[#a0a3b1]">
                 메모 (선택)
                 <textarea
                   value={editEventForm.description}
                   onChange={(e) => setEditEventForm((prev) => ({ ...prev, description: e.target.value }))}
                   rows={3}
-                  className="w-full rounded-lg border border-[#1F6F63]/40 bg-[#0B1412] px-4 py-2 text-[#E6F0ED] focus:border-[#2BA08C] focus:outline-none focus:ring-1 focus:ring-[#2BA08C]"
+                  className="w-full rounded-lg border border-navy-700 bg-navy-900 px-4 py-2 text-[#e4e6eb] placeholder:text-[#7a7d8c] focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50"
                   placeholder="이 시기의 대표적인 에피소드나 감정 등을 기록해 보세요."
                 />
               </label>
@@ -647,7 +647,7 @@ export default function EditPage() {
               {editEventError && <p className="text-sm text-red-400">{editEventError}</p>}
             </div>
             <div className="mt-6 flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsEditEventOpen(false)} className="border-[#2BA08C]/30 text-[#E6F0ED]">
+              <Button variant="outline" onClick={() => setIsEditEventOpen(false)} className="border-navy-700 text-[#e4e6eb]">
                 취소
               </Button>
               <Button onClick={handleUpdateEvent} disabled={isUpdatingEvent}>
