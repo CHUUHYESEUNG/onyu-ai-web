@@ -1,15 +1,12 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { BookOpen, Download, Mic, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
-interface LandingPageProps {
-  onStartClick: () => void;
-}
-
-export function LandingPage({ onStartClick }: LandingPageProps) {
+export function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0B0F0E] via-[#0D1211] to-[#0E1513]">
       <section id="overview" className="relative overflow-hidden px-6 pt-32 pb-20">
@@ -36,10 +33,12 @@ export function LandingPage({ onStartClick }: LandingPageProps) {
           </p>
 
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Button className="px-8 py-6" size="lg" onClick={onStartClick}>
-              <Mic className="h-5 w-5" />
-              지금 시작하기
-            </Button>
+            <Link href="/dashboard">
+              <Button className="px-8 py-6" size="lg">
+                <Mic className="h-5 w-5" />
+                지금 시작하기
+              </Button>
+            </Link>
 
             <Button
               variant="outline"
@@ -96,10 +95,12 @@ export function LandingPage({ onStartClick }: LandingPageProps) {
           <div className="rounded-3xl border border-[#2BA08C]/30 bg-gradient-to-br from-[#0F3D35]/40 to-[#1F6F63]/20 p-12">
             <h2 className="mb-6 text-3xl text-[#E6F0ED]">지금 바로 시작해보세요</h2>
             <p className="mb-8 text-lg text-[#E6F0ED]/70">당신의 첫 이야기를 온유와 함께 만들어보세요.</p>
-            <Button className="px-10 py-6" size="lg" onClick={onStartClick}>
-              <Mic className="h-5 w-5" />
-              무료로 시작하기
-            </Button>
+            <Link href="/dashboard">
+              <Button className="px-10 py-6" size="lg">
+                <Mic className="h-5 w-5" />
+                무료로 시작하기
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
