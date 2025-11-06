@@ -68,6 +68,58 @@ export async function getSections(eventId?: string): Promise<Section[]> {
   return allSections;
 }
 
+// 타임라인 이벤트 생성
+export async function createTimelineEvent(input: {
+  label: string;
+  date?: string;
+  description?: string;
+}): Promise<TimelineEvent> {
+  await delay(400);
+  const newEvent: TimelineEvent = {
+    id: `event_${Date.now()}`,
+    label: input.label,
+    date: input.date,
+    status: 'todo',
+    description: input.description,
+  };
+  console.log('Created timeline event', newEvent);
+  return newEvent;
+}
+
+export async function updateTimelineEvent(eventId: string, updates: Partial<Omit<TimelineEvent, 'id'>>): Promise<TimelineEvent> {
+  await delay(400);
+  const updated: TimelineEvent = {
+    id: eventId,
+    label: updates.label ?? '제목 미정',
+    date: updates.date,
+    status: updates.status,
+    description: updates.description,
+  };
+  console.log('Updated timeline event', updated);
+  return updated;
+}
+
+// 섹션 생성
+export async function createSection(input: {
+  title: string;
+  excerpt: string;
+  content: string;
+  eventId?: string;
+  subsections?: Section['subsections'];
+}): Promise<Section> {
+  await delay(400);
+  const newSection: Section = {
+    id: `section_${Date.now()}`,
+    title: input.title,
+    excerpt: input.excerpt,
+    content: input.content,
+    eventId: input.eventId,
+    subsections: input.subsections ?? [],
+  };
+  console.log('Created section', newSection);
+  return newSection;
+}
+
 // 섹션 저장
 export async function saveSection(sectionId: string, content: string): Promise<void> {
   await delay(800);
@@ -131,6 +183,17 @@ export async function* processAudio(assetId: string): AsyncGenerator<ProcessingS
       '안녕하세요. 저는 1950년 경상남도 진주에서 태어났습니다. 어린 시절 고향에서의 추억들이 아직도 생생합니다.',
     audioUrl: '/mock-audio.mp3',
   };
+}
+
+export async function analyzeTranscriptToSubsections(transcript: string): Promise<Section['subsections']> {
+  await delay(600);
+  const sentences = transcript.split(/[.?!]/).map((s) => s.trim()).filter(Boolean);
+  return sentences.map((sentence, index) => ({
+    id: `sub_${Date.now()}_${index}`,
+    title: `소단락 ${index + 1}`,
+    content: sentence,
+    sourceType: 'voice',
+  }));
 }
 
 // 타임라인 이벤트 순서 변경

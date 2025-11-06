@@ -55,7 +55,6 @@ export function TimelineBar({ events, selectedEventId, onEventSelect, onReorder 
               <TimelineEventItem
                 key={event.id}
                 event={event}
-                index={index}
                 isFirst={index === 0}
                 isLast={index === events.length - 1}
                 isSelected={selectedEventId === event.id}
@@ -73,7 +72,6 @@ export function TimelineBar({ events, selectedEventId, onEventSelect, onReorder 
 
 interface TimelineEventItemProps {
   event: TimelineEvent;
-  index: number;
   isFirst: boolean;
   isLast: boolean;
   isSelected: boolean;
@@ -84,7 +82,6 @@ interface TimelineEventItemProps {
 
 function TimelineEventItem({
   event,
-  index,
   isFirst,
   isLast,
   isSelected,

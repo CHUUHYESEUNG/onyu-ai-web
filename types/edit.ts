@@ -9,6 +9,7 @@ export interface TimelineEvent {
   label: string; // "유년기", "중학교", "첫 직장" 등
   date?: string; // "1986-03" 등
   status?: 'todo' | 'done'; // 선택 표시용
+  description?: string; // 추가 메모
 }
 
 // 섹션 (좌측 리스트)
@@ -18,6 +19,12 @@ export interface Section {
   excerpt: string; // 미리보기 1~2문장
   content: string; // 본문(수정 대상)
   eventId?: string; // 상단 타임라인 이벤트와 연결
+  subsections?: Array<{
+    id: string;
+    title: string;
+    content: string;
+    sourceType: 'text' | 'voice' | 'file';
+  }>;
 }
 
 // 처리 단계

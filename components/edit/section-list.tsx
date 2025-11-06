@@ -27,9 +27,12 @@ export function SectionList({ sections, selectedSectionId, onSectionSelect, onRe
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      const oldIndex = sections.findIndex((s) => s.id === active.id);
-      const newIndex = sections.findIndex((s) => s.id === over.id);
-      onReorder(oldIndex, newIndex);
+      const filtered = filteredSections;
+      const oldIndex = filtered.findIndex((s) => s.id === active.id);
+      const newIndex = filtered.findIndex((s) => s.id === over.id);
+      if (oldIndex !== -1 && newIndex !== -1) {
+        onReorder(oldIndex, newIndex);
+      }
     }
   };
 
@@ -40,7 +43,7 @@ export function SectionList({ sections, selectedSectionId, onSectionSelect, onRe
   };
 
   const handleMoveDown = (index: number) => {
-    if (index < sections.length - 1) {
+    if (index < filteredSections.length - 1) {
       onReorder(index, index + 1);
     }
   };
@@ -78,15 +81,14 @@ export function SectionList({ sections, selectedSectionId, onSectionSelect, onRe
           <div className="p-4 text-center text-[#A8C3BC]/60 text-sm">섹션이 없습니다.</div>
         ) : (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+            <SortableContext items={filteredSections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
               <div className="space-y-2 p-2">
                 {filteredSections.map((section, index) => (
                   <SectionListItem
                     key={section.id}
                     section={section}
-                    index={index}
                     isFirst={index === 0}
-                    isLast={index === sections.length - 1}
+                    isLast={index === filteredSections.length - 1}
                     isSelected={selectedSectionId === section.id}
                     onSelect={onSectionSelect}
                     onMoveUp={() => handleMoveUp(index)}
@@ -104,7 +106,6 @@ export function SectionList({ sections, selectedSectionId, onSectionSelect, onRe
 
 interface SectionListItemProps {
   section: Section;
-  index: number;
   isFirst: boolean;
   isLast: boolean;
   isSelected: boolean;
@@ -115,7 +116,6 @@ interface SectionListItemProps {
 
 function SectionListItem({
   section,
-  index,
   isFirst,
   isLast,
   isSelected,
