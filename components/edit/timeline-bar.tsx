@@ -47,9 +47,9 @@ export function TimelineBar({ events, selectedEventId, onEventSelect, onReorder 
     <div className="w-full bg-[#0E1513] border-b border-[#1F6F63]/30 px-6 py-6">
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={events.map((e) => e.id)} strategy={horizontalListSortingStrategy}>
-          <div className="relative flex items-start gap-4 overflow-x-auto pb-2" role="tablist">
+          <div className="relative flex items-start gap-8 overflow-x-auto pb-2 justify-center min-w-full" role="tablist">
             {/* 점선 */}
-            <div className="absolute top-8 left-0 right-0 h-[2px] border-t-2 border-dashed border-[#1F6F63]/40 pointer-events-none" />
+            <div className="absolute top-8 left-8 right-8 h-[2px] border-t-2 border-dashed border-[#1F6F63]/40 pointer-events-none" />
 
             {events.map((event, index) => (
               <TimelineEventItem
