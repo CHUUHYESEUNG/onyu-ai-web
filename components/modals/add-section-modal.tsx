@@ -20,6 +20,7 @@ interface AddSectionModalProps {
   onClose: () => void;
   onFormChange: Dispatch<SetStateAction<SectionInputState>>;
   onSubmit: () => Promise<void>;
+  onStartRecording?: () => void;
 }
 
 export function AddSectionModal({
@@ -31,6 +32,7 @@ export function AddSectionModal({
   onClose,
   onFormChange,
   onSubmit,
+  onStartRecording,
 }: AddSectionModalProps) {
   const [error, setError] = useState<string | null>(null);
 
@@ -54,6 +56,23 @@ export function AddSectionModal({
     }
     await onSubmit();
     setError(null);
+  };
+
+  const handleStartRecording = async () => {
+    if (!form.eventId) {
+      setError("대주제를 선택해주세요.");
+      return;
+    }
+    if (!form.title.trim()) {
+      setError("소주제 제목을 입력해주세요.");
+      return;
+    }
+    // 소주제 생성 후 녹음 시작
+    await onSubmit();
+    setError(null);
+    if (onStartRecording) {
+      onStartRecording();
+    }
   };
 
   return (
@@ -122,13 +141,23 @@ export function AddSectionModal({
                 />
               </label>
             </>
+          ) : mode === "voice" ? (
+            <div className="rounded-xl border border-accent/30 bg-accent/5 p-4">
+              <div className="flex items-start gap-3 mb-3">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
+                  <span className="text-lg">🎤</span>
+                </div>
+                <div className="flex-1 text-sm text-[#e4e6eb]">
+                  <p className="font-medium mb-1">음성 녹음 준비 완료</p>
+                  <p className="text-xs text-[#a0a3b1]">
+                    소주제를 추가한 후 우측 패널에서 바로 녹음을 시작할 수 있습니다.
+                  </p>
+                </div>
+              </div>
+            </div>
           ) : (
             <div className="rounded-xl border border-navy-700 bg-navy-900 p-4 text-xs text-[#a0a3b1]">
-              <p className="mb-2">
-                {mode === "voice"
-                  ? "녹음 패널에서 음성을 녹음하면 자동으로 소단락이 생성됩니다."
-                  : "파일을 업로드하면 전사/요약 후 소단락이 생성됩니다."}
-              </p>
+              <p className="mb-2">파일을 업로드하면 전사/요약 후 소단락이 생성됩니다.</p>
               <p>생성된 소단락은 우측 패널에서 확인하고 편집할 수 있습니다.</p>
             </div>
           )}
@@ -139,9 +168,16 @@ export function AddSectionModal({
           <Button variant="outline" onClick={handleClose} className="border-navy-700 text-[#e4e6eb] hover:bg-card">
             취소
           </Button>
-          <Button onClick={handleSubmit} disabled={isLoading}>
-            {isLoading ? "생성 중..." : "소주제 추가"}
-          </Button>
+          {mode === "voice" ? (
+            <Button onClick={handleStartRecording} disabled={isLoading} className="gap-2">
+              <span>🎤</span>
+              {isLoading ? "생성 중..." : "소주제 추가 & 녹음 시작"}
+            </Button>
+          ) : (
+            <Button onClick={handleSubmit} disabled={isLoading}>
+              {isLoading ? "생성 중..." : "소주제 추가"}
+            </Button>
+          )}
         </div>
       </div>
     </div>

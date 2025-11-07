@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { CheckCircle2 } from "lucide-react";
 
@@ -48,13 +47,8 @@ interface UpgradeModalProps {
 }
 
 export function UpgradeModal({ open, onClose }: UpgradeModalProps) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-    return () => setMounted(false);
-  }, []);
-
-  if (!open || !mounted) return null;
+  if (!open) return null;
+  if (typeof document === "undefined") return null;
 
   return createPortal(
     <div

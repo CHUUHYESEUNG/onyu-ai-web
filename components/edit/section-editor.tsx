@@ -1,7 +1,7 @@
 'use client';
 
 import { Section, TimelineEvent } from '@/types/edit';
-import { Save, X, History, Trash2, Plus } from 'lucide-react';
+import { Save, X, History, Trash2, Plus, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Separator } from '@/components/ui/separator';
 
@@ -17,6 +17,7 @@ export function SectionEditor({ section, event, onSave }: SectionEditorProps) {
   const [hasChanges, setHasChanges] = useState(false);
   const [subsections, setSubsections] = useState<Section['subsections']>([]);
   const [expandedSubsectionId, setExpandedSubsectionId] = useState<string | null>(null);
+  const [showSubsections, setShowSubsections] = useState(false);
 
   useEffect(() => {
     if (section) {
@@ -89,8 +90,8 @@ export function SectionEditor({ section, event, onSave }: SectionEditorProps) {
       </div>
 
       {/* 에디터 */}
-      <div className="flex-1 p-4 overflow-y-auto">
-        <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
+      <div className="flex-1 p-6 overflow-y-auto max-w-4xl mx-auto w-full">
+        <div className="space-y-6">
           <div className="flex flex-col">
             <label className="mb-2 text-sm text-[#a0a3b1]">본문 작성</label>
             <textarea
@@ -119,11 +120,23 @@ export function SectionEditor({ section, event, onSave }: SectionEditorProps) {
               선택한 섹션의 본문을 수정할 수 있습니다
             </span>
           </div>
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-[#a0a3b1]">소단락</p>
+
+          {/* 소단락 섹션 - 접을 수 있음 */}
+          <div className="flex flex-col border border-navy-700/50 rounded-lg overflow-hidden">
+            <button
+              onClick={() => setShowSubsections(!showSubsections)}
+              className="flex items-center justify-between p-3 bg-card hover:bg-card-hover transition-colors text-left"
+            >
+              <div className="flex items-center gap-3">
+                {showSubsections ? <ChevronUp className="w-4 h-4 text-[#a0a3b1]" /> : <ChevronDown className="w-4 h-4 text-[#a0a3b1]" />}
+                <span className="text-sm font-medium text-[#e4e6eb]">소단락 관리</span>
+                {subsections && subsections.length > 0 && (
+                  <span className="text-xs text-[#a0a3b1]">({subsections.length})</span>
+                )}
+              </div>
               <button
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
                   setSubsections((prev) => [
                     ...(prev ?? []),
                     {
@@ -134,77 +147,82 @@ export function SectionEditor({ section, event, onSave }: SectionEditorProps) {
                     },
                   ]);
                   setHasChanges(true);
+                  setShowSubsections(true);
                 }}
-                className="inline-flex items-center gap-1 rounded-lg border border-navy-700 px-3 py-1 text-xs text-[#e4e6eb] hover:border-accent transition-colors"
+                className="inline-flex items-center gap-1 rounded-lg border border-navy-700 px-3 py-1.5 text-xs text-[#e4e6eb] hover:border-accent transition-colors"
               >
-                <Plus className="h-3 w-3" /> 소단락 추가
+                <Plus className="h-3 w-3" /> 추가
               </button>
-            </div>
-            <div className="space-y-3">
-              {(subsections ?? []).length === 0 ? (
-                <p className="text-xs text-[#a0a3b1]/60">녹음/파일 처리 결과가 여기에 표시되며, 손수 추가하거나 수정할 수 있습니다.</p>
-              ) : (
-                subsections!.map((subsection) => (
-                  <div key={subsection.id} className="rounded-xl border border-navy-700 bg-card p-3 shadow-sm">
-                    <div className="flex items-center justify-between gap-2">
-                      <input
-                        value={subsection.title}
-                        onChange={(e) => {
-                          setSubsections((prev) =>
-                            prev?.map((item) =>
-                              item.id === subsection.id ? { ...item, title: e.target.value } : item,
-                            ),
-                          );
-                          setHasChanges(true);
-                        }}
-                        className="flex-1 rounded bg-transparent text-sm text-[#e4e6eb] focus:border-accent focus:outline-none"
-                      />
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() =>
-                            setExpandedSubsectionId((current) =>
-                              current === subsection.id ? null : subsection.id,
-                            )
-                          }
-                          className="rounded border border-navy-700 px-2 py-1 text-[10px] text-[#a0a3b1] hover:border-accent transition-colors"
-                        >
-                          {expandedSubsectionId === subsection.id ? '닫기' : '내용'}
-                        </button>
-                        <button
-                          onClick={() => {
-                            setSubsections((prev) => prev?.filter((item) => item.id !== subsection.id));
+            </button>
+
+            {showSubsections && (
+              <div className="p-4 space-y-3 border-t border-navy-700/50">
+                {(subsections ?? []).length === 0 ? (
+                  <p className="text-xs text-[#a0a3b1]/60 text-center py-4">
+                    녹음/파일 처리 결과가 여기에 표시되며, 손수 추가하거나 수정할 수 있습니다.
+                  </p>
+                ) : (
+                  subsections!.map((subsection) => (
+                    <div key={subsection.id} className="rounded-lg border border-navy-700 bg-navy-900 p-3 shadow-sm">
+                      <div className="flex items-center justify-between gap-2">
+                        <input
+                          value={subsection.title}
+                          onChange={(e) => {
+                            setSubsections((prev) =>
+                              prev?.map((item) =>
+                                item.id === subsection.id ? { ...item, title: e.target.value } : item,
+                              ),
+                            );
                             setHasChanges(true);
                           }}
-                          className="rounded border border-navy-700 px-2 py-1 text-[10px] text-[#a0a3b1] hover:border-red-400 hover:text-red-300 transition-colors"
-                          title="삭제"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </button>
+                          className="flex-1 rounded bg-transparent text-sm text-[#e4e6eb] focus:border-accent focus:outline-none"
+                        />
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() =>
+                              setExpandedSubsectionId((current) =>
+                                current === subsection.id ? null : subsection.id,
+                              )
+                            }
+                            className="rounded border border-navy-700 px-2 py-1 text-[10px] text-[#a0a3b1] hover:border-accent transition-colors"
+                          >
+                            {expandedSubsectionId === subsection.id ? '닫기' : '내용'}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSubsections((prev) => prev?.filter((item) => item.id !== subsection.id));
+                              setHasChanges(true);
+                            }}
+                            className="rounded border border-navy-700 px-2 py-1 text-[10px] text-[#a0a3b1] hover:border-red-400 hover:text-red-300 transition-colors"
+                            title="삭제"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
                       </div>
+                      {expandedSubsectionId === subsection.id && (
+                        <textarea
+                          value={subsection.content}
+                          onChange={(e) => {
+                            setSubsections((prev) =>
+                              prev?.map((item) =>
+                                item.id === subsection.id ? { ...item, content: e.target.value } : item,
+                              ),
+                            );
+                            setHasChanges(true);
+                          }}
+                          className="mt-2 w-full rounded-lg border border-navy-700 bg-card p-2 text-xs text-[#e4e6eb] placeholder:text-[#7a7d8c] focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50"
+                          rows={4}
+                        />
+                      )}
                     </div>
-                    {expandedSubsectionId === subsection.id && (
-                      <textarea
-                        value={subsection.content}
-                        onChange={(e) => {
-                          setSubsections((prev) =>
-                            prev?.map((item) =>
-                              item.id === subsection.id ? { ...item, content: e.target.value } : item,
-                            ),
-                          );
-                          setHasChanges(true);
-                        }}
-                        className="mt-2 w-full rounded-lg border border-navy-700 bg-navy-900 p-2 text-xs text-[#e4e6eb] placeholder:text-[#7a7d8c] focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50"
-                        rows={4}
-                      />
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-            <Separator />
-            <div className="text-xs text-[#a0a3b1]/60">
-              소단락은 음성/파일 처리 결과로 자동 생성되며, 필요 시 직접 추가/수정할 수 있습니다.
-            </div>
+                  ))
+                )}
+                <div className="text-xs text-[#a0a3b1]/60 pt-2 border-t border-navy-700/50">
+                  💡 소단락은 음성/파일 처리 결과로 자동 생성되며, 필요 시 직접 추가/수정할 수 있습니다.
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

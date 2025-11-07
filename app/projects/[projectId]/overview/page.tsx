@@ -2,10 +2,8 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Navigation } from "@/components/navigation";
-import { Footer } from "@/components/footer";
+import { useState, useEffect } from "react";
 import {
-  ArrowRight,
   CalendarDays,
   BookOpenCheck,
   MailCheck,
@@ -16,7 +14,11 @@ import {
   Clock3,
   Circle,
   Users,
+  Flame,
+  Target,
 } from "lucide-react";
+import { loadGamificationData, getTodayProgress } from "@/lib/gamification";
+import type { GamificationData } from "@/types/gamification";
 
 const PROJECT_SUMMARIES: Record<
   string,
@@ -104,61 +106,154 @@ export default function ProjectOverviewPage() {
     invitees: [],
   };
 
+  // 게이미피케이션 데이터
+  const [gamificationData, setGamificationData] = useState<GamificationData | null>(null);
+
+  useEffect(() => {
+    if (params?.projectId) {
+      const data = loadGamificationData(params.projectId);
+      setGamificationData(data);
+    }
+  }, [params?.projectId]);
+
+  const todayProgress = gamificationData ? getTodayProgress(gamificationData) : null;
+  const completedMissions = todayProgress?.missions.filter(m => m.completed).length ?? 0;
+  const totalMissions = todayProgress?.missions.length ?? 3;
+
   return (
-    <div className="min-h-screen bg-navy-900 text-[#e4e6eb]">
-      <Navigation />
-      <main className="mx-auto max-w-6xl px-6 py-24 space-y-10">
-        <section className="space-y-5 rounded-3xl border border-navy-800/70 bg-gradient-to-br from-navy-800/60 to-navy-900 p-8">
-          <div className="flex items-center gap-3 text-sm text-[#7a7d8c]">
-            <Link href="/projects" className="hover:text-[#e4e6eb]">
-              프로젝트
-            </Link>
-            <ArrowRight className="h-4 w-4" />
-            <span className="text-[#e4e6eb]">{project.title}</span>
-          </div>
-          <div className="flex flex-col gap-3">
-            <p className="text-xs uppercase tracking-[0.4em] text-accent">Step 2 / 4 · 준비 점검</p>
-            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <div>
-                <h1 className="text-3xl font-semibold">인터뷰 준비가 거의 완료됐어요</h1>
-                <p className="text-[#a0a3b1]">초대 현황과 AI 셋업을 확인하고 편집 단계로 넘어가세요.</p>
+    <div className="space-y-10">
+        {/* 게이미피케이션 위젯 */}
+        {gamificationData && (
+          <section className="rounded-3xl border border-accent/20 bg-gradient-to-br from-accent/10 to-accent/5 p-6 text-white">
+            <div className="grid gap-4 md:grid-cols-2">
+              {/* 스트릭 카운터 */}
+              <div className="rounded-2xl border border-accent/30 bg-white/5 p-5">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-500/20">
+                    <Flame className="h-6 w-6 text-orange-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-white/60">연속 기록</p>
+                    <p className="text-3xl font-bold text-white">{gamificationData.currentStreak}일</p>
+                  </div>
+                </div>
+                <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-orange-500 to-orange-400 transition-all duration-500"
+                    style={{ width: `${Math.min((gamificationData.currentStreak / 10) * 100, 100)}%` }}
+                  />
+                </div>
+                <p className="text-xs text-white/50 mt-2">
+                  10일 달성까지 {Math.max(0, 10 - gamificationData.currentStreak)}일
+                </p>
               </div>
-              <div className="flex gap-3">
-                <Link
-                  href={`/projects/${params?.projectId ?? ""}/edit`}
-                  className="rounded-2xl bg-accent px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-accent-hover"
-                >
-                  편집 시작하기
-                </Link>
-                <Link
-                  href={`/projects/${params?.projectId ?? ""}/publish`}
-                  className="rounded-2xl border border-navy-700 px-6 py-3 text-sm font-semibold text-[#a0a3b1] hover:border-accent hover:text-accent"
-                >
-                  출판 플로우 보기
-                </Link>
+
+              {/* 오늘의 미션 */}
+              <div className="rounded-2xl border border-accent/30 bg-white/5 p-5">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/20">
+                    <Target className="h-6 w-6 text-accent" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-white/60">오늘의 미션</p>
+                    <p className="text-3xl font-bold text-white">
+                      {completedMissions}/{totalMissions}
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {todayProgress?.missions.map((mission) => (
+                    <div
+                      key={mission.id}
+                      className="flex items-center justify-between text-sm"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span>{mission.icon}</span>
+                        <span className={mission.completed ? "text-white" : "text-white/60"}>
+                          {mission.label}
+                        </span>
+                      </div>
+                      {mission.completed ? (
+                        <CheckCircle2 className="h-4 w-4 text-green-400" />
+                      ) : (
+                        <span className="text-xs text-white/40">
+                          {mission.current}/{mission.target}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-            <div className="text-sm text-[#a0a3b1]">
-              <span className="font-semibold text-[#e4e6eb]">포커스</span>: {project.focus.join(" · ")}
+
+            {/* 프로젝트 통계 */}
+            <div className="mt-4 grid grid-cols-4 gap-3">
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-center">
+                <p className="text-2xl font-bold text-white">{gamificationData.stats.totalSections}</p>
+                <p className="text-xs text-white/60">소주제</p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-center">
+                <p className="text-2xl font-bold text-white">{gamificationData.stats.totalTimelineEvents}</p>
+                <p className="text-xs text-white/60">타임라인</p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-center">
+                <p className="text-2xl font-bold text-white">
+                  {Math.floor(gamificationData.stats.totalRecordingTime / 60)}분
+                </p>
+                <p className="text-xs text-white/60">녹음</p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-center">
+                <p className="text-2xl font-bold text-white">
+                  {gamificationData.stats.totalWords.toLocaleString()}
+                </p>
+                <p className="text-xs text-white/60">단어</p>
+              </div>
+            </div>
+          </section>
+        )}
+
+        <section className="space-y-5 rounded-3xl border border-white/10 bg-white/5 p-8 text-white">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.4em] text-white/40">Step 2 / 4 · 준비 점검</p>
+              <h1 className="text-3xl font-semibold">인터뷰 준비가 거의 완료됐어요</h1>
+              <p className="text-white/60">초대 현황과 AI 셋업을 확인하고 편집 단계로 넘어가세요.</p>
+              <div className="mt-3 text-sm text-white/60">
+                <span className="font-semibold text-white">포커스</span>: {project.focus.join(" · ")}
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <Link
+                href={`/projects/${params?.projectId ?? ""}/edit`}
+                className="rounded-2xl bg-[#1E5EFF] px-6 py-3 text-sm font-semibold text-white shadow-[0_12px_40px_rgba(30,94,255,0.35)]"
+              >
+                편집 시작하기
+              </Link>
+              <Link
+                href={`/projects/${params?.projectId ?? ""}/publish`}
+                className="rounded-2xl border border-white/20 px-6 py-3 text-sm font-semibold text-white/70 hover:text-white"
+              >
+                출판 플로우 보기
+              </Link>
             </div>
           </div>
         </section>
 
         <section className="grid gap-6 lg:grid-cols-[1.7fr_1fr]">
           <div className="space-y-6">
-            <div className="rounded-3xl border border-navy-800 bg-navy-900/60 p-6">
+            <div className="rounded-3xl border border-white/5 bg-white/5 p-6">
               <div className="mb-4 flex items-center gap-2 text-sm text-[#7a7d8c]">
-                <CalendarDays className="h-5 w-5 text-accent" /> 주차별 인터뷰 플랜
+                <CalendarDays className="h-5 w-5 text-[#1E5EFF]" /> 주차별 인터뷰 플랜
               </div>
               <div className="space-y-4">
                 {TIMELINE_PLAN.map((week) => (
                   <div
                     key={week.week}
-                    className="rounded-2xl border border-navy-800/70 bg-navy-900/40 p-4"
+                    className="rounded-2xl border border-white/5 bg-[#04060d] p-4"
                   >
                     <div className="flex flex-wrap items-center gap-3">
-                      <span className="text-xs uppercase tracking-[0.3em] text-[#7a7d8c]">{week.week}</span>
-                      <span className="text-sm font-semibold">{week.theme}</span>
+                      <span className="text-xs uppercase tracking-[0.3em] text-white/40">{week.week}</span>
+                      <span className="text-sm font-semibold text-white">{week.theme}</span>
                       <span
                         className={`rounded-full px-3 py-0.5 text-xs ${
                           week.status === "ready"
@@ -175,7 +270,7 @@ export default function ProjectOverviewPage() {
                           : "예정"}
                       </span>
                     </div>
-                    <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-[#a0a3b1]">
+                    <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-white/60">
                       {week.tasks.map((task) => (
                         <li key={task}>{task}</li>
                       ))}
@@ -185,7 +280,7 @@ export default function ProjectOverviewPage() {
               </div>
             </div>
 
-            <div className="rounded-3xl border border-navy-800 bg-navy-900/60 p-6">
+            <div className="rounded-3xl border border-white/5 bg-white/5 p-6">
               <div className="mb-4 flex items-center gap-2 text-sm text-[#7a7d8c]">
                 <BookOpenCheck className="h-5 w-5 text-accent" /> AI 준비 현황
               </div>
@@ -212,7 +307,7 @@ export default function ProjectOverviewPage() {
           </div>
 
           <aside className="space-y-6">
-            <div className="rounded-3xl border border-navy-800 bg-navy-900/70 p-6">
+            <div className="rounded-3xl border border-white/5 bg-white/5 p-6">
               <div className="mb-4 flex items-center gap-2 text-sm text-[#7a7d8c]">
                 <MailCheck className="h-5 w-5 text-accent" /> 초대 메일 상태
               </div>
@@ -250,7 +345,7 @@ export default function ProjectOverviewPage() {
               </Link>
             </div>
 
-            <div className="rounded-3xl border border-navy-800 bg-navy-900/70 p-6 text-sm text-[#a0a3b1]">
+            <div className="rounded-3xl border border-white/5 bg-white/5 p-6 text-sm text-white/70">
               <div className="mb-3 flex items-center gap-2 text-base font-semibold text-[#e4e6eb]">
                 <Users className="h-5 w-5 text-accent" /> Step 2 요약
               </div>
@@ -262,8 +357,6 @@ export default function ProjectOverviewPage() {
             </div>
           </aside>
         </section>
-      </main>
-      <Footer />
-    </div>
+      </div>
   );
 }

@@ -84,3 +84,14 @@ export interface TranscriptItem {
   wordCount: number;            // 단어 수 (간단 지표)
   audioUrl?: string;            // 재생 가능한 오디오 URL (optional)
 }
+
+// 녹음 세션 메타데이터
+export interface SessionMetadata {
+  sessionId: string;            // 세션 고유 ID
+  startTime: Date;              // 세션 시작 시간
+  lastRecordingTime: Date;      // 마지막 녹음 시간
+  chunkCount: number;           // 조각 개수
+  totalDuration: number;        // 총 녹음 시간 (초)
+  sectionTitle?: string;        // 연결된 소주제 제목
+  isActive: boolean;            // 활성 세션 여부 (30분 이내)
+}

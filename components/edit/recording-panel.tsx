@@ -1,6 +1,6 @@
 'use client';
 
-import { ProcessingState, PROCESSING_STEPS, TranscriptItem } from '@/types/edit';
+import { ProcessingState, PROCESSING_STEPS, TranscriptItem, SessionMetadata } from '@/types/edit';
 import { Mic, Square, Upload, CheckCircle, AlertCircle, X } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { useAudioRecorder, formatDuration } from '@/hooks/use-audio-recorder';
@@ -15,6 +15,9 @@ interface TranscriptFragmentPayload {
 
 interface RecordingPanelProps {
   transcriptHistory: TranscriptItem[];
+  currentSectionTitle?: string;
+  activeSessionId: string | null;
+  activeSessionMetadata?: SessionMetadata;
   onTranscriptAdd: (fragment: TranscriptFragmentPayload) => void;
   onTranscriptUpdate: (id: string, transcript: string) => void;
   onTranscriptDelete: (id: string) => void;
@@ -23,6 +26,8 @@ interface RecordingPanelProps {
   onSplitFragment: (id: string) => void;
   onClearAll: () => void;
   onClosePanel: () => void;
+  onCreateNewSession: () => void;
+  getOrCreateActiveSession: () => string;
 }
 
 const chunkTranscript = (text: string, maxLength = 220): string[] => {
@@ -60,6 +65,9 @@ const ensureChunkDuration = (duration: number, chunkCount: number) => {
 
 export function RecordingPanel({
   transcriptHistory,
+  currentSectionTitle,
+  activeSessionId,
+  activeSessionMetadata,
   onTranscriptAdd,
   onTranscriptUpdate,
   onTranscriptDelete,
@@ -68,6 +76,8 @@ export function RecordingPanel({
   onSplitFragment,
   onClearAll,
   onClosePanel,
+  onCreateNewSession,
+  getOrCreateActiveSession,
 }: RecordingPanelProps) {
   const {
     isRecording,
@@ -85,24 +95,6 @@ export function RecordingPanel({
 
   const [processingState, setProcessingState] = useState<ProcessingState | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-
-  // 녹음 완료 후 자동 업로드
-  useEffect(() => {
-    if (audioBlob && !isRecording) {
-      handleUpload(audioBlob);
-    }
-  }, [audioBlob, isRecording, handleUpload]);
-
-  // 녹음 시작/정지 핸들러
-  const handleRecordToggle = async () => {
-    if (isRecording) {
-      await stopRecording();
-    } else {
-      clearError();
-      setProcessingState({ current: 'recording', progress: 0 });
-      await startRecording();
-    }
-  };
 
   // 파일 업로드 핸들러 (MOCK 처리)
   const handleUpload = useCallback(async (blob: Blob) => {
@@ -134,7 +126,7 @@ export function RecordingPanel({
       ];
 
       const randomTranscript = mockTranscripts[Math.floor(Math.random() * mockTranscripts.length)];
-      const sessionId = `session_${Date.now()}`;
+      const sessionId = getOrCreateActiveSession(); // 활성 세션 재사용 또는 새 세션 생성
       const chunks = chunkTranscript(randomTranscript);
       const baselineDuration = duration || Math.max(Math.round(blob.size / 16000), 10);
       const perChunkDuration = ensureChunkDuration(baselineDuration, chunks.length);
@@ -165,6 +157,24 @@ export function RecordingPanel({
     }
   }, [duration, isUploading, onTranscriptAdd]);
 
+  // 녹음 완료 후 자동 업로드
+  useEffect(() => {
+    if (audioBlob && !isRecording) {
+      handleUpload(audioBlob);
+    }
+  }, [audioBlob, isRecording, handleUpload]);
+
+  // 녹음 시작/정지 핸들러
+  const handleRecordToggle = async () => {
+    if (isRecording) {
+      await stopRecording();
+    } else {
+      clearError();
+      setProcessingState({ current: 'recording', progress: 0 });
+      await startRecording();
+    }
+  };
+
   // 파일 업로드 핸들러 (input)
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -186,20 +196,56 @@ export function RecordingPanel({
 
   return (
     <div className="flex flex-col h-full bg-navy-900 border-l border-navy-700">
-      <div className="flex items-center justify-between border-b border-navy-800 px-4 py-3">
-        <div>
+      {/* 헤더 */}
+      <div className="border-b border-navy-800 px-4 py-3">
+        <div className="flex items-center justify-between mb-2">
           <p className="text-sm font-semibold text-[#e4e6eb]">녹음 & 전사 패널</p>
-          <p className="text-[11px] text-[#7a7d8c]">
-            세션 {new Set(transcriptHistory.map((item) => item.sessionId)).size}개 · 조각 {transcriptHistory.length}개
-          </p>
+          <button
+            onClick={onClosePanel}
+            className="inline-flex items-center gap-1 rounded-lg border border-navy-700 px-3 py-1.5 text-xs text-[#a0a3b1] hover:text-[#e4e6eb] hover:border-accent transition-colors"
+          >
+            <X className="w-4 h-4" />
+            닫기
+          </button>
         </div>
-        <button
-          onClick={onClosePanel}
-          className="inline-flex items-center gap-1 rounded-lg border border-navy-700 px-3 py-1.5 text-xs text-[#a0a3b1] hover:text-[#e4e6eb] hover:border-accent transition-colors"
-        >
-          <X className="w-4 h-4" />
-          닫기
-        </button>
+
+        {currentSectionTitle && (
+          <div className="mb-2 inline-flex items-center gap-2 rounded-lg bg-accent/10 border border-accent/30 px-3 py-1.5">
+            <span className="text-xs font-medium text-accent">📝 작업 중</span>
+            <span className="text-xs text-[#e4e6eb]">{currentSectionTitle}</span>
+          </div>
+        )}
+
+        {/* 활성 세션 정보 */}
+        {activeSessionMetadata && (
+          <div className="mb-2 flex items-center justify-between rounded-lg border border-green-500/30 bg-green-500/10 px-3 py-2">
+            <div className="flex items-center gap-2">
+              <span className="flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              </span>
+              <div>
+                <p className="text-xs font-medium text-green-300">
+                  세션 진행 중
+                </p>
+                <p className="text-[10px] text-[#a0a3b1]">
+                  {activeSessionMetadata.chunkCount}개 조각 · {Math.floor(activeSessionMetadata.totalDuration / 60)}분 {activeSessionMetadata.totalDuration % 60}초
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={onCreateNewSession}
+              className="rounded-md border border-navy-700 px-2 py-1 text-[10px] text-[#a0a3b1] hover:border-accent hover:text-accent transition-colors"
+              title="새 세션 시작"
+            >
+              새 세션
+            </button>
+          </div>
+        )}
+
+        <p className="text-[11px] text-[#7a7d8c]">
+          세션 {new Set(transcriptHistory.map((item) => item.sessionId)).size}개 · 조각 {transcriptHistory.length}개
+        </p>
       </div>
 
       {/* 녹음 컨트롤 */}

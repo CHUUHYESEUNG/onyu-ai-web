@@ -2,15 +2,20 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import Link from 'next/link';
-import { ChevronLeft, ChevronRight, Home, Mic, MicOff } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Mic, MicOff } from 'lucide-react';
 import { TimelineBar } from '@/components/edit/timeline-bar';
 import { SectionList } from '@/components/edit/section-list';
 import { SectionEditor } from '@/components/edit/section-editor';
 import { RecordingPanel } from '@/components/edit/recording-panel';
 import { CollapsedPanel } from '@/components/edit/collapsed-panel';
 import { AddSectionModal } from '@/components/modals/add-section-modal';
-import { TimelineEvent, Section, TranscriptItem } from '@/types/edit';
+import { TimelineEvent, Section, TranscriptItem, SessionMetadata } from '@/types/edit';
+import {
+  loadGamificationData,
+  onSectionCreated,
+  onRecordingCompleted,
+  onTimelineEventCreated,
+} from '@/lib/gamification';
 import {
   getTimeline,
   getSections,
@@ -111,6 +116,10 @@ export default function EditPage() {
   // 녹음 히스토리 관리
   const [transcriptHistory, setTranscriptHistory] = useState<TranscriptItem[]>([]);
   const [editorCursorPosition, setEditorCursorPosition] = useState(0);
+
+  // 세션 관리
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [sessionMetadata, setSessionMetadata] = useState<Map<string, SessionMetadata>>(new Map());
 
   const router = useRouter();
 
@@ -228,6 +237,62 @@ export default function EditPage() {
     );
   };
 
+  // 세션 관리 헬퍼
+  const SESSION_TIMEOUT = 30 * 60 * 1000; // 30분
+
+  const isSessionActive = (sessionId: string): boolean => {
+    const metadata = sessionMetadata.get(sessionId);
+    if (!metadata) return false;
+    const timeSinceLastRecording = Date.now() - metadata.lastRecordingTime.getTime();
+    return timeSinceLastRecording < SESSION_TIMEOUT;
+  };
+
+  const createNewSession = (sectionTitle?: string): string => {
+    const newSessionId = `session_${Date.now()}`;
+    const now = new Date();
+    setSessionMetadata(prev => {
+      const next = new Map(prev);
+      next.set(newSessionId, {
+        sessionId: newSessionId,
+        startTime: now,
+        lastRecordingTime: now,
+        chunkCount: 0,
+        totalDuration: 0,
+        sectionTitle,
+        isActive: true,
+      });
+      return next;
+    });
+    setActiveSessionId(newSessionId);
+    return newSessionId;
+  };
+
+  const updateSessionMetadata = (sessionId: string, duration: number) => {
+    setSessionMetadata(prev => {
+      const next = new Map(prev);
+      const metadata = next.get(sessionId);
+      if (metadata) {
+        next.set(sessionId, {
+          ...metadata,
+          lastRecordingTime: new Date(),
+          chunkCount: metadata.chunkCount + 1,
+          totalDuration: metadata.totalDuration + duration,
+          isActive: true,
+        });
+      }
+      return next;
+    });
+  };
+
+  const getOrCreateActiveSession = (): string => {
+    // 현재 활성 세션이 있고 아직 유효하면 재사용
+    if (activeSessionId && isSessionActive(activeSessionId)) {
+      return activeSessionId;
+    }
+    // 아니면 새 세션 생성
+    return createNewSession(selectedSection?.title);
+  };
+
   // 전사 결과 히스토리에 추가
   const handleAddTranscript = (fragment: {
     transcript: string;
@@ -239,6 +304,10 @@ export default function EditPage() {
     if (!trimmed) return;
 
     showRecordingPanel();
+
+    // 세션 메타데이터 업데이트
+    updateSessionMetadata(fragment.sessionId, fragment.duration);
+
     const newItem: TranscriptItem = {
       id: `transcript_${Date.now()}_${Math.random().toString(16).slice(2)}`,
       transcript: trimmed,
@@ -251,6 +320,12 @@ export default function EditPage() {
     };
 
     setTranscriptHistory((prev) => reindexFragments([...prev, newItem]));
+
+    // 게이미피케이션: 녹음 완료 미션 업데이트
+    if (params?.projectId) {
+      const gamificationData = loadGamificationData(params.projectId);
+      onRecordingCompleted(gamificationData, fragment.duration, newItem.wordCount);
+    }
   };
 
   // 전사 결과 수정
@@ -511,9 +586,7 @@ export default function EditPage() {
 
   const openAddSectionModalForMode = (mode: 'text' | 'voice' | 'file') => {
     setSectionOption(mode);
-    if (mode === 'voice') {
-      showRecordingPanel();
-    }
+    // voice 모드일 때는 모달에서 "녹음 시작하기" 버튼 클릭 시 패널 펼침
     setIsAddSectionOpen(true);
   };
 
@@ -533,6 +606,12 @@ export default function EditPage() {
       setSelectedEventId(newEvent.id);
       setSectionForm((prev) => ({ ...prev, eventId: newEvent.id }));
       setIsAddEventOpen(false);
+
+      // 게이미피케이션: 타임라인 이벤트 추가 미션 업데이트
+      if (params?.projectId) {
+        const gamificationData = loadGamificationData(params.projectId);
+        onTimelineEventCreated(gamificationData);
+      }
     } catch (error) {
       console.error('Failed to create timeline event', error);
       setEventError('대주제 생성 중 오류가 발생했습니다.');
@@ -574,6 +653,13 @@ export default function EditPage() {
       setSelectedEventId(formState.eventId);
       setSectionForm(initialSectionForm);
       setIsAddSectionOpen(false);
+
+      // 게이미피케이션: 소주제 작성 미션 업데이트
+      if (params?.projectId) {
+        const gamificationData = loadGamificationData(params.projectId);
+        onSectionCreated(gamificationData);
+      }
+
       if (mode === 'voice') {
         showRecordingPanel();
       }
@@ -629,39 +715,13 @@ export default function EditPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-navy-900 flex flex-col">
-      <header className="border-b border-navy-700 bg-navy-800/30">
-        <div className="mx-auto flex w-full max-w-[1400px] items-center justify-between px-6 py-4">
-          {/* Breadcrumb Navigation */}
-          <nav className="flex items-center gap-2 text-sm">
-            <Link
-              href="/"
-              className="text-[#a0a3b1] hover:text-[#e4e6eb] transition-colors"
-              aria-label="홈으로 이동"
-            >
-              <Home className="w-4 h-4" />
-            </Link>
-            <ChevronRight className="w-4 h-4 text-[#7a7d8c]" />
-            <Link
-              href="/projects"
-              className="text-[#a0a3b1] hover:text-accent transition-colors"
-            >
-              내 프로젝트
-            </Link>
-            <ChevronRight className="w-4 h-4 text-[#7a7d8c]" />
-            <span className="text-[#e4e6eb] font-medium">
-              {getProjectTitle(params?.projectId)}
-            </span>
-          </nav>
-
-          {/* Action Buttons */}
-          <div className="flex items-center gap-3">
+      <div className="rounded-3xl border border-white/10 bg-white/5 px-6 py-4 text-sm text-white/70 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <p>타임라인과 녹음 패널을 사용해 챕터를 정리하고 자서전을 완성하세요.</p>
+          <div className="flex flex-wrap gap-2 text-sm">
             <Button
               variant="outline"
               onClick={() => (isRecordingPanelPinned ? hideRecordingPanel() : showRecordingPanel())}
-              className={`border-navy-700 text-[#e4e6eb] ${
-                isRecordingPanelPinned ? 'bg-accent/10 border-accent/50' : 'bg-transparent'
-              }`}
+              className={`border-white/30 text-white ${isRecordingPanelPinned ? 'bg-white/10' : 'bg-transparent'}`}
             >
               {isRecordingPanelPinned ? (
                 <>
@@ -678,7 +738,7 @@ export default function EditPage() {
             <Button
               variant="outline"
               onClick={handleInjectDummyRecording}
-              className="border-navy-700 bg-transparent text-[#e4e6eb]"
+              className="border-white/30 text-white"
             >
               더미 녹음
             </Button>
@@ -686,32 +746,28 @@ export default function EditPage() {
               variant="outline"
               onClick={handleTemporarySave}
               disabled={isSaving}
-              className="border-navy-700 bg-transparent text-[#e4e6eb]"
+              className="border-white/30 text-white"
             >
               {isSaving ? '임시 저장 중...' : '임시 저장'}
             </Button>
             <Button onClick={handleComplete}>편집 완료</Button>
           </div>
         </div>
-      </header>
 
-      {/* 상단 타임라인 */}
-      <TimelineBar
-        events={timeline}
-        selectedEventId={selectedEventId}
-        onEventSelect={handleEventSelect}
-        onReorder={handleTimelineReorder}
-        onAddEvent={openAddEventModal}
-        onEditEvent={openEditEventModal}
-      />
+        <TimelineBar
+          events={timeline}
+          selectedEventId={selectedEventId}
+          onEventSelect={handleEventSelect}
+          onReorder={handleTimelineReorder}
+          onAddEvent={openAddEventModal}
+          onEditEvent={openEditEventModal}
+        />
 
-      {/* 3열 레이아웃 */}
-      <div className="flex-1 max-w-[1400px] mx-auto w-full px-4 py-6">
-        <div className="flex gap-4 h-[calc(100vh-180px)] relative">
+        <div className="flex gap-4 h-[calc(100vh-220px)] relative">
           {/* 좌측: 섹션 리스트 */}
           <div
             className={`flex h-full flex-col transition-all duration-300 ${
-              leftPanelCollapsed ? 'w-16' : 'w-[25%] min-w-[280px]'
+              leftPanelCollapsed ? 'w-16' : 'w-[20%] min-w-[240px]'
             }`}
           >
             {leftPanelCollapsed ? (
@@ -732,11 +788,10 @@ export default function EditPage() {
           {/* 좌측 토글 버튼 */}
           <button
             onClick={() => setLeftPanelCollapsed(!leftPanelCollapsed)}
-            className="absolute left-3 top-6 z-10 flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] uppercase tracking-[0.3em] text-white hover:border-white/40"
+            className="absolute left-3 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-8 h-8 rounded-full border border-white/10 bg-white/5 text-white hover:border-white/40 hover:bg-white/10 transition-colors"
             title={leftPanelCollapsed ? '섹션 목록 펼치기' : '섹션 목록 접기'}
           >
-            {leftPanelCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
-            Sections
+            {leftPanelCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </button>
 
           {/* 중앙: 에디터 */}
@@ -751,19 +806,16 @@ export default function EditPage() {
           {/* 우측: 녹음 패널 또는 런처 */}
           {isRecordingPanelPinned ? (
             <>
-          {isRecordingPanelPinned && (
-            <button
-              onClick={() => setRightPanelCollapsed(!rightPanelCollapsed)}
-              className="absolute right-3 top-6 z-10 flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] uppercase tracking-[0.3em] text-white hover:border-white/40"
-              title={rightPanelCollapsed ? '녹음 패널 펼치기' : '녹음 패널 접기'}
-            >
-              {rightPanelCollapsed ? <ChevronLeft className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-              Voice
-            </button>
-          )}
+              <button
+                onClick={() => setRightPanelCollapsed(!rightPanelCollapsed)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-8 h-8 rounded-full border border-white/10 bg-white/5 text-white hover:border-white/40 hover:bg-white/10 transition-colors"
+                title={rightPanelCollapsed ? '녹음 패널 펼치기' : '녹음 패널 접기'}
+              >
+                {rightPanelCollapsed ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              </button>
               <div
                 className={`flex h-full flex-col transition-all duration-300 ${
-                  rightPanelCollapsed ? 'w-16' : 'w-[25%] min-w-[280px]'
+                  rightPanelCollapsed ? 'w-16' : 'w-[22%] min-w-[260px]'
                 }`}
               >
                 {rightPanelCollapsed ? (
@@ -771,6 +823,9 @@ export default function EditPage() {
                 ) : (
                   <RecordingPanel
                     transcriptHistory={transcriptHistory}
+                    currentSectionTitle={selectedSection?.title}
+                    activeSessionId={activeSessionId}
+                    activeSessionMetadata={activeSessionId ? sessionMetadata.get(activeSessionId) : undefined}
                     onTranscriptAdd={handleAddTranscript}
                     onTranscriptUpdate={handleUpdateTranscript}
                     onTranscriptDelete={handleDeleteTranscript}
@@ -779,6 +834,8 @@ export default function EditPage() {
                     onSplitFragment={handleSplitFragment}
                     onClearAll={handleClearAllTranscripts}
                     onClosePanel={hideRecordingPanel}
+                    onCreateNewSession={() => createNewSession(selectedSection?.title)}
+                    getOrCreateActiveSession={getOrCreateActiveSession}
                   />
                 )}
               </div>
@@ -796,7 +853,6 @@ export default function EditPage() {
             </div>
           )}
         </div>
-      </div>
       {isAddEventOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsAddEventOpen(false)} />
@@ -855,9 +911,7 @@ export default function EditPage() {
           </div>
         </div>
       )}
-      </div>
-
-      {isAddSectionModeOpen && (
+        {isAddSectionModeOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsAddSectionModeOpen(false)} />
           <div className="relative z-10 w-full max-w-md rounded-2xl border border-accent/30 bg-card p-6 shadow-2xl shadow-black/50">
@@ -915,7 +969,7 @@ export default function EditPage() {
         </div>
       )}
 
-      {isEditEventOpen && selectedEventId && (
+        {isEditEventOpen && selectedEventId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsEditEventOpen(false)} />
           <div className="relative z-10 w-full max-w-md rounded-2xl border border-accent/30 bg-card p-6 shadow-2xl shadow-black/50">
@@ -974,22 +1028,26 @@ export default function EditPage() {
         </div>
       )}
 
-      <AddSectionModal
-        mode={sectionOption}
-        events={timeline}
-        form={sectionForm}
-        isOpen={isAddSectionOpen}
-        isLoading={isCreatingSection}
-        onClose={() => {
-          setIsAddSectionOpen(false);
-          setSectionForm(initialSectionForm);
-        }}
-        onFormChange={setSectionForm}
-        onSubmit={async () => {
-          await handleCreateSection(sectionForm, sectionOption);
-        }}
-      />
-      {/* AddSectionModal handles creation UI */}
+        <AddSectionModal
+          mode={sectionOption}
+          events={timeline}
+          form={sectionForm}
+          isOpen={isAddSectionOpen}
+          isLoading={isCreatingSection}
+          onClose={() => {
+            setIsAddSectionOpen(false);
+            setSectionForm(initialSectionForm);
+          }}
+          onFormChange={setSectionForm}
+          onSubmit={async () => {
+            await handleCreateSection(sectionForm, sectionOption);
+          }}
+          onStartRecording={() => {
+            setIsAddSectionOpen(false);
+            setRightPanelCollapsed(false);
+            setIsRecordingPanelPinned(true);
+          }}
+        />
     </>
   );
 }

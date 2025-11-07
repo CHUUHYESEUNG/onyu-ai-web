@@ -25,7 +25,7 @@
   - Step 3에 초대 이메일 입력/추가/삭제가 가능한 선택 영역을 넣어 프로젝트 생성 시 바로 초대 메일 발송 목록을 수집할 수 있게 했습니다.
 - `/app/projects/[projectId]/overview/page.tsx`, `/app/projects/page.tsx`  
   - Step 2 전용 “프로젝트 준비 점검” 페이지를 새로 추가해 인터뷰 타임라인, 초대 메일 상태, AI 셋업 현황을 카드로 요약하고, 편집/출판 CTA를 제공했습니다.  
-  - 프로젝트 목록의 카드 링크를 `/overview`로 변경해 생성 직후 이 페이지를 거쳐 Step 3 편집 화면으로 넘어가는 흐름이 자연스럽도록 했습니다.
+  - 프로젝트 목록 UI를 `public/capture/6.png`처럼 어둡고 앱스러운 대시보드로 리디자인했고, 좌측 사이드바·상단 바를 통해 언제든 홈(`/`)으로 이동할 수 있게 했습니다.
 - `components/navigation.tsx`, `components/upgrade-modal.tsx`  
   - 루트 랜딩의 화이트/블루 톤에 맞춰 헤더를 밝은 배경, 네비게이션 링크, 업그레이드/시작하기 CTA로 재구성했고 모달은 동일하게 연결됩니다.  
   - 각 플랜을 선택하면 `/projects/new`로 이동해 새 프로젝트 플로우와 자연스럽게 이어집니다.
@@ -33,12 +33,19 @@
   - `public/capture/ref_main_1.png` 레이아웃을 참고해 루트 상품 소개 페이지를 Hero → 신뢰지표 → 기능 섹션(2개) → 솔루션 카드 → 탭형 핵심 기능 4종 → 후기 → CTA 순서로 화이트/블루 톤으로 재구성했습니다.  
   - 탭 섹션에는 `thumbnail.png`와 기존 캡처 이미지를 사용해 플랜별 기능을 시각적으로 보여주고, 각 영역에 아이콘을 추가해 완성도를 높였습니다.
 - `app/projects/[projectId]/edit/page.tsx`, `components/edit/collapsed-panel.tsx`  
-  - 좌측/우측 패널 토글을 캡처 스타일의 칩 버튼으로 변경해 접힘 상태에서도 헤더를 따라가는 스키니 토글 UI를 제공하고, 톤앤매너를 헤더와 맞췄습니다.
+  - 좌측/우측 패널 토글을 캡처 스타일의 칩 버튼으로 변경해 접힘 상태에서도 헤더를 따라가는 스키니 토글 UI를 제공했고, `ProjectShell`을 도입해 `/projects`와 동일한 사이드바/브레드크럼을 유지한 채 본문만 교체되도록 했습니다.
+- `components/project-shell.tsx`  
+  - `/projects`, `/projects/[projectId]/overview`, `/projects/[projectId]/edit`에서 재사용되는 대시보드 프레임을 구현해 좌측 자동 접힘 사이드바 + 상단 바 + 브레드크럼을 통일했습니다. 편집 페이지도 이 레이아웃을 공유하도록 업데이트했습니다.
 
 ## 테스트
 
 - `npm run lint`  
   - **결과:** 실패. 새로운 변경으로 인한 오류는 없으며, 기존부터 존재하던 `app/api/transcribe/route.ts` 의 `@ts-nocheck` 및 여러 `any` 사용, 또 사용되지 않는 mock 함수 등으로 인해 동일한 에러/경고가 재현됩니다.
+
+## 현재 이슈 요약
+
+- `app/projects/[projectId]/edit/page.tsx`에서 `<ProjectShell>`을 감싸는 JSX 구조를 정리하는 과정에서 여전히 ESLint가 “clos-ing tag mismatch” 오류를 보고합니다. 렌더 함수 하단의 모달 컴포넌트들이 `<ProjectShell>` 밖으로 빠져있지 않은지 재점검 필요합니다.
+- `app/api/transcribe/route.ts`는 `@ts-nocheck`와 다수 `any`로 인해 린트가 진행되지 않고 있습니다. 타입 정의와 환경변수 처리 방식을 손보면 전체 빌드/테스트 확인이 가능해집니다.
 
 ## 다음 단계 제안
 

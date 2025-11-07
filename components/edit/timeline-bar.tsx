@@ -3,7 +3,7 @@
 import { DndContext, closestCenter, DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, horizontalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Check, Plus, PenSquare } from 'lucide-react';
+import { Check, Plus, PenSquare, GripVertical, Circle } from 'lucide-react';
 import { TimelineEvent, ReorderHandler } from '@/types/edit';
 
 interface TimelineBarProps {
@@ -43,38 +43,39 @@ export function TimelineBar({
 
   return (
     <div className="w-full bg-card border-b border-navy-700/30 px-6 py-4">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex-1">
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={events.map((e) => e.id)} strategy={horizontalListSortingStrategy}>
-              <div className="relative flex items-start gap-8 overflow-x-auto pb-2 justify-center min-w-full" role="tablist">
-                {/* 점선 */}
-                <div className="absolute top-6 left-8 right-8 h-[2px] border-t-2 border-dashed border-navy-700/40 pointer-events-none" />
+      <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-navy-700">
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={events.map((e) => e.id)} strategy={horizontalListSortingStrategy}>
+            <div className="inline-flex gap-3 py-2 min-w-max" role="tablist">
+              {events.map((event) => (
+                <TimelineEventItem
+                  key={event.id}
+                  event={event}
+                  isSelected={selectedEventId === event.id}
+                  onSelect={onEventSelect}
+                  onEdit={onEditEvent}
+                />
+              ))}
 
-                {events.map((event) => (
-                  <TimelineEventItem
-                    key={event.id}
-                    event={event}
-                    isSelected={selectedEventId === event.id}
-                    onSelect={onEventSelect}
-                    onEdit={onEditEvent}
-                  />
-                ))}
-
-                {onAddEvent && (
-                  <button
-                    onClick={onAddEvent}
-                    className="flex items-center gap-1 rounded-full border border-dashed border-accent/60 px-3 py-1.5 text-xs text-accent hover:bg-accent/10 transition-colors whitespace-nowrap ml-2"
-                    title="대주제 추가"
-                  >
-                    <Plus className="w-4 h-4" />
-                    새 대주제
-                  </button>
-                )}
-              </div>
-            </SortableContext>
-          </DndContext>
-        </div>
+              {onAddEvent && (
+                <button
+                  onClick={onAddEvent}
+                  className="
+                    w-[140px] sm:w-[160px] h-[110px] sm:h-[120px]
+                    flex-shrink-0 flex flex-col items-center justify-center gap-2
+                    border-2 border-dashed border-accent/40 rounded-xl
+                    bg-accent/5 hover:bg-accent/10 hover:border-accent/60
+                    transition-all
+                  "
+                  title="대주제 추가"
+                >
+                  <Plus className="w-6 h-6 text-accent" />
+                  <span className="text-sm font-medium text-accent">새 대주제</span>
+                </button>
+              )}
+            </div>
+          </SortableContext>
+        </DndContext>
       </div>
     </div>
   );
@@ -104,34 +105,26 @@ function TimelineEventItem({
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="relative flex-shrink-0 flex flex-col items-center gap-2 group">
-      {/* 타임라인 노드 (드래그 가능) */}
-      <div className="relative flex-shrink-0">
-        <button
-          onClick={() => onSelect(event.id)}
-          className="relative flex-shrink-0 focus:outline-none"
-          {...attributes}
-          {...listeners}
-          title="드래그하여 순서 변경"
-        >
-          <div
-            className={`
-              relative z-10 w-6 h-6 rounded-full transition-all flex items-center justify-center
-              ${
-                isSelected
-                  ? 'bg-accent ring-4 ring-accent/30 scale-110'
-                  : event.status === 'done'
-                    ? 'bg-navy-700 border-2 border-accent'
-                    : 'bg-card border-2 border-navy-700'
-              }
-              group-hover:scale-110 group-focus-within:ring-4 group-focus-within:ring-accent/50
-              cursor-move
-            `}
-          >
-            {event.status === 'done' && <Check className="h-3.5 w-3.5 text-white" />}
-          </div>
-        </button>
-
+    <div
+      ref={setNodeRef}
+      style={style}
+      onClick={() => onSelect(event.id)}
+      className={`
+        w-[140px] sm:w-[160px] h-[110px] sm:h-[120px]
+        flex-shrink-0 flex flex-col
+        border-2 rounded-xl
+        transition-all
+        cursor-pointer
+        group
+        ${
+          isSelected
+            ? 'border-accent bg-accent/10 shadow-lg shadow-accent/20'
+            : 'border-navy-700 bg-card/50 hover:border-accent/50 hover:bg-card/80'
+        }
+      `}
+    >
+      {/* 상단: 편집 버튼 */}
+      <div className="flex justify-end p-2">
         {onEdit && (
           <button
             onClick={(e) => {
@@ -139,10 +132,11 @@ function TimelineEventItem({
               onEdit(event.id);
             }}
             className="
-              absolute -right-4 -top-2 rounded-md border border-navy-700 bg-navy-900/90 p-1
-              text-[#a0a3b1] opacity-0 shadow-lg transition-all
-              group-hover:opacity-100 group-focus-within:opacity-100
-              hover:text-accent hover:border-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40
+              rounded-md border border-navy-700/50 bg-navy-900/90 p-1
+              text-[#a0a3b1] opacity-0 group-hover:opacity-100
+              hover:text-accent hover:border-accent
+              transition-all
+              focus:outline-none focus:opacity-100
             "
             title="대주제 이름 수정"
           >
@@ -151,17 +145,49 @@ function TimelineEventItem({
         )}
       </div>
 
-      {/* 라벨 */}
-      <div className="text-center whitespace-nowrap">
-        <div
+      {/* 중앙: 메인 라벨 */}
+      <div className="flex-1 flex items-center justify-center px-3 py-1">
+        <h3
           className={`
-            text-xs font-medium transition-colors
-            ${isSelected ? 'text-accent' : 'text-[#a0a3b1]'}
+            text-sm sm:text-base font-semibold text-center line-clamp-2 break-words
+            transition-colors
+            ${isSelected ? 'text-accent' : 'text-[#e4e6eb]'}
           `}
         >
           {event.label}
+        </h3>
+      </div>
+
+      {/* 날짜 */}
+      {event.date && (
+        <div className="px-3 text-[10px] sm:text-xs text-center text-[#a0a3b1] mb-1">
+          {event.date}
         </div>
-        {event.date && <div className="text-[11px] text-[#a0a3b1]/60 mt-1">{event.date}</div>}
+      )}
+
+      {/* 하단: 드래그 핸들 + 상태 */}
+      <div className="flex items-center justify-between px-2 py-2 border-t border-navy-700/30">
+        <div
+          {...attributes}
+          {...listeners}
+          className="cursor-move text-[#6c6f82] hover:text-[#a0a3b1] transition-colors"
+          title="드래그하여 순서 변경"
+        >
+          <GripVertical className="w-4 h-4" />
+        </div>
+        <div className="flex items-center gap-1 text-[10px] font-medium">
+          {event.status === 'done' ? (
+            <>
+              <Check className="w-3 h-3 text-accent" />
+              <span className="text-accent">완료</span>
+            </>
+          ) : (
+            <>
+              <Circle className="w-3 h-3 text-[#a0a3b1]" />
+              <span className="text-[#a0a3b1]">예정</span>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
