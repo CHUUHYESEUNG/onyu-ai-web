@@ -3,6 +3,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Script from "next/script";
 import {
   Mic,
   Sparkles,
@@ -14,6 +16,7 @@ import {
   ArrowRight,
   Quote,
 } from "lucide-react";
+import Lottie from 'lottie-react';
 
 const TRUST_METRICS = [
   { label: "전자책/실물책 동시 제작", detail: "원클릭 워크플로우", icon: ShieldCheck },
@@ -56,9 +59,33 @@ const TESTIMONIALS = [
 ];
 
 export function LandingPage() {
+  const router = useRouter();
+  const [showLoading, setShowLoading] = useState(false);
+
+  const handleStartProject = () => {
+    if (showLoading) return;
+    setShowLoading(true);
+    setTimeout(() => {
+      router.push("/projects/new");
+    }, 2000);
+  };
+
   return (
     <div className="bg-white text-[#0C1523]">
-      <HeroSection />
+      <Script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js" strategy="afterInteractive" />
+      {showLoading && (
+        <div className="fixed inset-0 z-[2000] flex flex-col items-center justify-center bg-white/90 backdrop-blur">
+          {/* <lottie-player
+            autoplay
+            loop
+            mode="normal"
+            src="/lottie/book_blue.json"
+            style={{ width: "280px", height: "280px" }}
+          /> */}
+          <p className="mt-6 text-sm font-semibold text-[#1E5EFF]">AI가 프로젝트 환경을 준비하고 있습니다...</p>
+        </div>
+      )}
+      <HeroSection onStartProject={handleStartProject} />
       <TrustSection />
       {FEATURE_BLOCKS.map((block) => (
         <FeatureSection key={block.title} {...block} />
@@ -71,7 +98,7 @@ export function LandingPage() {
   );
 }
 
-function HeroSection() {
+function HeroSection({ onStartProject }: { onStartProject: () => void }) {
   return (
     <section className="relative overflow-hidden px-6 pt-32 pb-24">
       <div className="absolute inset-0 bg-[linear-gradient(180deg,#F4F6FB_0%,#FFFFFF_70%)]" />
@@ -90,9 +117,12 @@ function HeroSection() {
           멀티 포맷으로 남겨보세요.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-4">
-          <Link href="/projects/new" className="flex items-center gap-2 rounded-full bg-[#1E5EFF] px-6 py-3 text-sm font-semibold text-white">
+          <button
+            onClick={onStartProject}
+            className="flex items-center gap-2 rounded-full bg-[#1E5EFF] px-6 py-3 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(30,94,255,0.35)]"
+          >
             <Mic className="h-4 w-4" /> 무료로 자서전 시작하기
-          </Link>
+          </button>
           <Link
             href="/projects"
             className="flex items-center gap-2 rounded-full border border-[#D2D9EF] px-6 py-3 text-sm font-semibold text-[#1E5EFF]"

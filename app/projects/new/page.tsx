@@ -1,12 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Navigation } from "@/components/navigation";
-import { Footer } from "@/components/footer";
+import { ProjectShell } from "@/components/project-shell";
 import {
-  ArrowRight,
   BookmarkCheck,
   Calendar,
   CheckCircle2,
@@ -14,7 +11,6 @@ import {
   Mic,
   Sparkles,
   Users,
-  ClipboardCheck,
 } from "lucide-react";
 
 const CREATION_STEPS = [
@@ -111,68 +107,72 @@ export default function NewProjectPage() {
   };
 
   return (
-    <div className="min-h-screen bg-navy-900 text-[#e4e6eb]">
-      <Navigation />
-      <main className="mx-auto max-w-6xl px-6 py-12 space-y-10">
-        <section className="space-y-4">
-          <div className="flex items-center gap-3 text-sm text-[#7a7d8c]">
-            <Link href="/projects" className="hover:text-[#e4e6eb]">
-              프로젝트
-            </Link>
-            <ArrowRight className="h-4 w-4" />
-            <span className="text-[#e4e6eb] font-medium">새 프로젝트</span>
-          </div>
-          <div className="flex flex-col gap-5 rounded-3xl border border-navy-800 bg-gradient-to-br from-navy-800/60 to-navy-900 p-8">
-            <div className="flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.3em] text-accent">
-              <Sparkles className="h-4 w-4" /> guided flow
-            </div>
-            <div className="space-y-3">
-              <h1 className="text-3xl font-semibold">새 자서전 프로젝트를 시작합니다</h1>
-              <p className="text-[#a0a3b1]">
+    <ProjectShell
+      breadcrumb={[
+        { label: "홈", href: "/" },
+        { label: "내 프로젝트", href: "/projects" },
+        { label: "새 프로젝트 생성" },
+      ]}
+    >
+      <div className="space-y-8 text-white">
+        <div className="rounded-3xl border border-white/10 bg-white/5 px-6 py-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-white/60">
+                <Sparkles className="h-4 w-4 text-[#1E5EFF]" /> Guided Flow
+              </div>
+              <h1 className="mt-2 text-3xl font-semibold">새 자서전 프로젝트를 시작합니다</h1>
+              <p className="mt-2 text-sm text-white/70">
                 기본 정보를 입력하면 Onyu가 인터뷰 질문, 녹음 일정, 편집 템플릿을 자동으로 세팅해 드립니다.
               </p>
             </div>
-            <div className="grid gap-4 md:grid-cols-4">
-              {CREATION_STEPS.map((step, index) => (
-                <div
-                  key={step.title}
-                  className="rounded-2xl border border-navy-800/80 bg-navy-900/40 p-4 shadow-sm"
-                >
-                  <div className="mb-3 flex items-center gap-2 text-xs text-[#7a7d8c]">
-                    {index === 0 ? (
-                      <CheckCircle2 className="h-4 w-4 text-accent" />
-                    ) : (
-                      <Circle className="h-4 w-4 text-navy-700" />
-                    )}
-                    Step {index + 1}
-                  </div>
-                  <p className="text-sm font-semibold">{step.title}</p>
-                  <p className="mt-1 text-xs text-[#7a7d8c]">{step.description}</p>
-                </div>
-              ))}
-            </div>
+            <button
+              onClick={handleSubmit}
+              className="rounded-full bg-[#1E5EFF] px-6 py-3 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(30,94,255,0.35)]"
+            >
+              프로젝트 생성하기
+            </button>
           </div>
-        </section>
+          <div className="mt-6 grid gap-4 md:grid-cols-4">
+            {CREATION_STEPS.map((step, index) => (
+              <div
+                key={step.title}
+                className="rounded-2xl border border-white/10 bg-white/5 p-4"
+              >
+                <div className="mb-3 flex items-center gap-2 text-xs text-white/60">
+                  {index === 0 ? (
+                    <CheckCircle2 className="h-4 w-4 text-[#1E5EFF]" />
+                  ) : (
+                    <Circle className="h-4 w-4 text-white/30" />
+                  )}
+                  Step {index + 1}
+                </div>
+                <p className="text-sm font-semibold">{step.title}</p>
+                <p className="mt-1 text-xs text-white/50">{step.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
 
         <section className="grid gap-6 lg:grid-cols-[1.7fr_1fr]">
           <div className="space-y-6">
-            <div className="rounded-3xl border border-navy-800 bg-navy-900/50 p-6">
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
               <header className="mb-5 flex items-center gap-3">
-                <div className="rounded-2xl bg-accent/15 p-2 text-accent">
+                <div className="rounded-2xl bg-white/10 p-2 text-[#1E5EFF]">
                   <BookmarkCheck className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="text-sm text-[#7a7d8c]">Step 1</p>
-                  <h2 className="text-xl font-semibold">프로젝트 기본 정보</h2>
+                  <p className="text-sm text-white/50">Step 1</p>
+                  <h2 className="text-xl font-semibold text-white">프로젝트 기본 정보</h2>
                 </div>
               </header>
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm text-[#a0a3b1]">프로젝트 제목</label>
+                  <label className="text-sm text-white/60">프로젝트 제목</label>
                   <input
                     value={form.title}
                     onChange={(e) => handleChange("title", e.target.value)}
-                    className="mt-1 w-full rounded-2xl border border-navy-800 bg-transparent px-4 py-3 text-base focus:border-accent focus:outline-none"
+                    className="mt-1 w-full rounded-2xl border border-white/10 bg-[#03050f] px-4 py-3 text-base text-white focus:border-[#1E5EFF] focus:outline-none"
                     placeholder="예) 할아버지의 바다"
                   />
                 </div>
@@ -429,8 +429,7 @@ export default function NewProjectPage() {
             프로젝트 생성하기
           </button>
         </section>
-      </main>
-      <Footer />
-    </div>
+      </div>
+    </ProjectShell>
   );
 }

@@ -36,6 +36,9 @@
   - 좌측/우측 패널 토글을 캡처 스타일의 칩 버튼으로 변경해 접힘 상태에서도 헤더를 따라가는 스키니 토글 UI를 제공했고, `ProjectShell`을 도입해 `/projects`와 동일한 사이드바/브레드크럼을 유지한 채 본문만 교체되도록 했습니다.
 - `components/project-shell.tsx`  
   - `/projects`, `/projects/[projectId]/overview`, `/projects/[projectId]/edit`에서 재사용되는 대시보드 프레임을 구현해 좌측 자동 접힘 사이드바 + 상단 바 + 브레드크럼을 통일했습니다. 편집 페이지도 이 레이아웃을 공유하도록 업데이트했습니다.
+- `/app/projects/new/page.tsx`  
+  - `ProjectShell` 레이아웃을 활용해 `/projects`·`/overview`·`/edit`와 동일한 다크 톤에서 새 프로젝트 온보딩 폼을 구성했습니다.  
+  - 기존 입력 필드와 기능은 유지하면서 대시보드 헤더/사이드바를 그대로 사용해 흐름이 자연스럽게 이어집니다.
 
 ## 테스트
 
