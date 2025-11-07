@@ -68,4 +68,19 @@ export const PROCESSING_STEPS: StepMetadata[] = [
 ];
 
 // 순서 변경 핸들러 타입
-export type ReorderHandler<T = string> = (fromIndex: number, toIndex: number) => void;
+export type ReorderHandler = (fromIndex: number, toIndex: number) => void;
+
+export type TranscriptStatus = 'draft' | 'inserted';
+
+// 전사 결과 아이템 (녹음 히스토리)
+export interface TranscriptItem {
+  id: string;                   // 고유 ID
+  transcript: string;           // 전사 결과 텍스트
+  timestamp: Date;              // 녹음 시각
+  duration: number;             // 녹음 길이 (초)
+  status: TranscriptStatus;     // 본문 반영 여부
+  sessionId: string;            // 녹음 세션 ID
+  chunkIndex: number;           // 세션 내 조각 순서
+  wordCount: number;            // 단어 수 (간단 지표)
+  audioUrl?: string;            // 재생 가능한 오디오 URL (optional)
+}

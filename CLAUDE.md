@@ -685,8 +685,7 @@ interface User {
 ├── /auth
 │   ├── /login                    # 로그인
 │   └── /signup                   # 회원가입
-├── /dashboard                    # 메인 대시보드 (✅ 구현됨)
-├── /projects
+├── /projects                     # 프로젝트 목록 (✅ 구현됨)
 │   ├── /new                      # 새 프로젝트 생성
 │   └── /[projectId]
 │       ├── /                     # 프로젝트 홈 (챕터 목록)
@@ -1061,7 +1060,7 @@ npm run build
 - 출판 플로우 고도화 제안 (백엔드 API, 결제 시스템, 비동기 처리)
 
 **최근 구현된 기능**:
-- ✅ App Router 기반 라우팅 구조 (/, /dashboard, /projects/[id]/edit, /projects/[id]/publish)
+- ✅ App Router 기반 라우팅 구조 (/, /projects, /projects/[id]/edit, /projects/[id]/publish)
 - ✅ 편집 페이지 3열 레이아웃 (타임라인 + 섹션 리스트 + 에디터 + 녹음 패널)
 - ✅ 다크 + 딥그린 디자인 시스템 적용
 - ✅ 목업 API 함수 (실제 API 연동 준비 완료)

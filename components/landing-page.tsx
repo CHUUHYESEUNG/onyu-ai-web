@@ -16,27 +16,27 @@ export function LandingPage() {
           <div className="mb-6 flex justify-center">
             <div className="inline-flex items-center gap-2 rounded-full border border-[#2BA08C]/30 bg-[#1F6F63]/20 px-4 py-2">
               <Sparkles className="h-4 w-4 text-[#2BA08C]" />
-              <span className="text-sm text-[#E6F0ED]/80">AI가 엮어주는 당신의 이야기</span>
+              <span className="text-sm text-[#E6F0ED]/80">AI가 도와주는 책 만들기</span>
             </div>
           </div>
 
           <h1 className="mb-6 text-5xl font-semibold leading-snug text-[#E6F0ED]">
             당신의 목소리가
             <br />
-            한 편의 이야기로.
+            한 편의 이야기로
           </h1>
 
           <p className="mx-auto mb-12 max-w-2xl text-xl leading-relaxed text-[#E6F0ED]/70">
-            온유는 당신의 이야기를 챕터로 엮어드립니다.
+            누구나 쉽게 쓸 수 있는 나만의 자서전
             <br />
             말로 전하는 이야기를, 글로 남겨보세요.
           </p>
 
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Link href="/dashboard">
+            <Link href="/projects">
               <Button className="px-8 py-6" size="lg">
                 <Mic className="h-5 w-5" />
-                지금 시작하기
+                무료로 시작하기
               </Button>
             </Link>
 
@@ -95,7 +95,7 @@ export function LandingPage() {
           <div className="rounded-3xl border border-[#2BA08C]/30 bg-gradient-to-br from-[#0F3D35]/40 to-[#1F6F63]/20 p-12">
             <h2 className="mb-6 text-3xl text-[#E6F0ED]">지금 바로 시작해보세요</h2>
             <p className="mb-8 text-lg text-[#E6F0ED]/70">당신의 첫 이야기를 온유와 함께 만들어보세요.</p>
-            <Link href="/dashboard">
+            <Link href="/projects">
               <Button className="px-10 py-6" size="lg">
                 <Mic className="h-5 w-5" />
                 무료로 시작하기

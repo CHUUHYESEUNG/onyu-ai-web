@@ -1,29 +1,74 @@
-// @ts-nocheck - Supabase 타입 이슈 임시 우회
 'use client';
 
-import { ProcessingState, ProcessingStep, PROCESSING_STEPS } from '@/types/edit';
-import { Mic, Square, Upload, Play, Pause, CheckCircle, AlertCircle, Copy } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { useAudioRecorder, formatDuration, blobToFile } from '@/hooks/use-audio-recorder';
-import { supabase, realtime } from '@/lib/supabase';
-import { useParams } from 'next/navigation';
+import { ProcessingState, PROCESSING_STEPS, TranscriptItem } from '@/types/edit';
+import { Mic, Square, Upload, CheckCircle, AlertCircle, X } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { useAudioRecorder, formatDuration } from '@/hooks/use-audio-recorder';
+import { TranscriptCard } from '@/components/edit/transcript-card';
 
-interface RecordingPanelProps {
-  processingState: ProcessingState | null;
-  onStartRecording: () => void;
-  onStopRecording: () => void;
-  onUploadFile: (file: File) => void;
-  isRecording: boolean;
+interface TranscriptFragmentPayload {
+  transcript: string;
+  duration: number;
+  sessionId: string;
+  chunkIndex: number;
 }
 
+interface RecordingPanelProps {
+  transcriptHistory: TranscriptItem[];
+  onTranscriptAdd: (fragment: TranscriptFragmentPayload) => void;
+  onTranscriptUpdate: (id: string, transcript: string) => void;
+  onTranscriptDelete: (id: string) => void;
+  onTranscriptInsert: (id: string, transcript: string) => void;
+  onMergeFragments: (id: string, direction: 'prev' | 'next') => void;
+  onSplitFragment: (id: string) => void;
+  onClearAll: () => void;
+  onClosePanel: () => void;
+}
+
+const chunkTranscript = (text: string, maxLength = 220): string[] => {
+  if (!text.trim()) return [];
+  const sentences = text.split(/(?<=[.!?]|[。！？]|다\.)\s+/);
+  const chunks: string[] = [];
+  let current = '';
+
+  for (const sentence of sentences) {
+    const next = current ? `${current} ${sentence}`.trim() : sentence.trim();
+    if (next.length > maxLength && current) {
+      chunks.push(current.trim());
+      current = sentence;
+    } else {
+      current = next;
+    }
+  }
+
+  if (current.trim()) {
+    chunks.push(current.trim());
+  }
+
+  if (chunks.length === 0) {
+    return [text.trim()];
+  }
+
+  return chunks;
+};
+
+const ensureChunkDuration = (duration: number, chunkCount: number) => {
+  if (chunkCount <= 0) return duration || 30;
+  const safeDuration = Math.max(duration, 10);
+  return Math.max(Math.round(safeDuration / chunkCount), 5);
+};
+
 export function RecordingPanel({
-  processingState: externalProcessingState,
-  onStartRecording: externalOnStartRecording,
-  onStopRecording: externalOnStopRecording,
-  onUploadFile: externalOnUploadFile,
-  isRecording: externalIsRecording,
+  transcriptHistory,
+  onTranscriptAdd,
+  onTranscriptUpdate,
+  onTranscriptDelete,
+  onTranscriptInsert,
+  onMergeFragments,
+  onSplitFragment,
+  onClearAll,
+  onClosePanel,
 }: RecordingPanelProps) {
-  const params = useParams<{ projectId: string }>();
   const {
     isRecording,
     isPaused,
@@ -38,43 +83,15 @@ export function RecordingPanel({
     clearError,
   } = useAudioRecorder();
 
-  const [processingState, setProcessingState] = useState<ProcessingState | null>(externalProcessingState);
-  const [currentAssetId, setCurrentAssetId] = useState<string | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [processingState, setProcessingState] = useState<ProcessingState | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-
-  // 외부 processingState 변경 감지
-  useEffect(() => {
-    if (externalProcessingState) {
-      setProcessingState(externalProcessingState);
-    }
-  }, [externalProcessingState]);
 
   // 녹음 완료 후 자동 업로드
   useEffect(() => {
     if (audioBlob && !isRecording) {
       handleUpload(audioBlob);
     }
-  }, [audioBlob, isRecording]);
-
-  // Realtime 구독
-  useEffect(() => {
-    if (!currentAssetId) return;
-
-    const unsubscribe = realtime.subscribeToAudioProcessing(
-      currentAssetId,
-      (status, progress) => {
-        setProcessingState({
-          current: status as ProcessingStep,
-          progress,
-        });
-      }
-    );
-
-    return () => {
-      unsubscribe();
-    };
-  }, [currentAssetId]);
+  }, [audioBlob, isRecording, handleUpload]);
 
   // 녹음 시작/정지 핸들러
   const handleRecordToggle = async () => {
@@ -87,70 +104,54 @@ export function RecordingPanel({
     }
   };
 
-  // 파일 업로드 핸들러
-  const handleUpload = async (blob: Blob) => {
+  // 파일 업로드 핸들러 (MOCK 처리)
+  const handleUpload = useCallback(async (blob: Blob) => {
     if (isUploading) return;
 
     try {
       setIsUploading(true);
       setProcessingState({ current: 'uploading', progress: 10 });
 
-      const file = blobToFile(blob);
-      const projectId = params?.projectId || 'default';
-
-      // 1. Supabase Storage 업로드
-      const filePath = `${projectId}/${Date.now()}_${file.name}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('audio-uploads')
-        .upload(filePath, file);
-
-      if (uploadError) {
-        throw new Error(`업로드 실패: ${uploadError.message}`);
-      }
-
+      // Mock: 업로드 시뮬레이션 (500ms)
+      await new Promise(resolve => setTimeout(resolve, 500));
       setProcessingState({ current: 'uploading', progress: 50 });
 
-      // 2. DB에 audio_assets 레코드 생성
-      const { data: asset, error: assetError } = await supabase
-        .from('audio_assets')
-        .insert({
-          project_id: projectId,
-          file_path: filePath,
-          file_size: file.size,
-          duration: duration,
-          status: 'uploaded',
-        })
-        .select()
-        .single();
-
-      if (assetError || !asset) {
-        throw new Error(`DB 저장 실패: ${assetError?.message}`);
-      }
-
-      setCurrentAssetId(asset.id);
+      // Mock: 전사 시뮬레이션 (1초)
       setProcessingState({ current: 'transcribing', progress: 10 });
+      await new Promise(resolve => setTimeout(resolve, 300));
+      setProcessingState({ current: 'transcribing', progress: 50 });
+      await new Promise(resolve => setTimeout(resolve, 400));
+      setProcessingState({ current: 'transcribing', progress: 80 });
+      await new Promise(resolve => setTimeout(resolve, 300));
 
-      // 3. /api/transcribe 호출
-      const formData = new FormData();
-      formData.append('audio', file);
-      formData.append('assetId', asset.id);
+      // Mock: 가상 전사 결과 생성
+      const mockTranscripts = [
+        "저는 1950년에 부산으로 피난을 갔어요. 그때 오빠가 저를 업고 걸어서 며칠을 갔던 기억이 나요. 정말 힘들었지만 가족이 함께 있어서 다행이었습니다.",
+        "첫 직장은 1975년에 들어간 은행이었어요. 그때는 여자 직원이 별로 없었는데, 제가 처음으로 여성 행원으로 채용됐습니다. 부모님이 정말 자랑스러워하셨어요.",
+        "남편을 만난 건 1978년 봄이었어요. 친구 소개로 만났는데, 첫인상이 참 좋았습니다. 성실하고 착한 사람이라는 게 눈에 보였어요.",
+        "아이들이 태어나고 나서는 정말 바빴어요. 육아와 일을 병행하는 게 쉽지 않았지만, 아이들 웃는 얼굴을 보면 피로가 다 풀렸습니다.",
+        "요즘 손주들을 보면서 옛날 생각이 많이 나요. 시간이 정말 빨리 흐르는 것 같습니다. 건강할 때 이렇게 이야기를 남길 수 있어서 참 다행이에요.",
+      ];
 
-      const response = await fetch('/api/transcribe', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || '전사 실패');
-      }
-
-      const { transcript } = await response.json();
+      const randomTranscript = mockTranscripts[Math.floor(Math.random() * mockTranscripts.length)];
+      const sessionId = `session_${Date.now()}`;
+      const chunks = chunkTranscript(randomTranscript);
+      const baselineDuration = duration || Math.max(Math.round(blob.size / 16000), 10);
+      const perChunkDuration = ensureChunkDuration(baselineDuration, chunks.length);
 
       setProcessingState({
         current: 'done',
         progress: 100,
-        transcript,
+      });
+
+      const effectiveChunks = chunks.length === 0 ? [randomTranscript] : chunks;
+      effectiveChunks.forEach((chunk, index) => {
+        onTranscriptAdd({
+          transcript: chunk,
+          duration: perChunkDuration,
+          sessionId,
+          chunkIndex: index,
+        });
       });
 
     } catch (error) {
@@ -162,7 +163,7 @@ export function RecordingPanel({
     } finally {
       setIsUploading(false);
     }
-  };
+  }, [duration, isUploading, onTranscriptAdd]);
 
   // 파일 업로드 핸들러 (input)
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -176,13 +177,6 @@ export function RecordingPanel({
     }
   };
 
-  // 전사 결과 복사
-  const copyTranscript = () => {
-    if (processingState?.transcript) {
-      navigator.clipboard.writeText(processingState.transcript);
-    }
-  };
-
   // 재시도
   const handleRetry = () => {
     if (audioBlob) {
@@ -192,6 +186,22 @@ export function RecordingPanel({
 
   return (
     <div className="flex flex-col h-full bg-navy-900 border-l border-navy-700">
+      <div className="flex items-center justify-between border-b border-navy-800 px-4 py-3">
+        <div>
+          <p className="text-sm font-semibold text-[#e4e6eb]">녹음 & 전사 패널</p>
+          <p className="text-[11px] text-[#7a7d8c]">
+            세션 {new Set(transcriptHistory.map((item) => item.sessionId)).size}개 · 조각 {transcriptHistory.length}개
+          </p>
+        </div>
+        <button
+          onClick={onClosePanel}
+          className="inline-flex items-center gap-1 rounded-lg border border-navy-700 px-3 py-1.5 text-xs text-[#a0a3b1] hover:text-[#e4e6eb] hover:border-accent transition-colors"
+        >
+          <X className="w-4 h-4" />
+          닫기
+        </button>
+      </div>
+
       {/* 녹음 컨트롤 */}
       <div className="p-4 border-b border-navy-700">
         <div className="flex flex-col items-center gap-4">
@@ -368,53 +378,52 @@ export function RecordingPanel({
           </div>
         )}
 
-        {/* 전사 결과 */}
-        {processingState?.transcript && (
-          <div className="mt-6">
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="text-sm font-medium text-[#e4e6eb]">전사 결과</h4>
+        {/* 녹음 기록 히스토리 */}
+        <div className="mt-6">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-sm font-medium text-[#e4e6eb]">
+              녹음 기록 ({transcriptHistory.length})
+            </h4>
+            {transcriptHistory.length > 0 && (
               <button
-                onClick={copyTranscript}
-                className="
-                  flex items-center gap-1 px-2 py-1 text-xs
-                  text-[#a0a3b1] hover:text-[#e4e6eb]
-                  hover:bg-card rounded transition-colors
-                "
+                onClick={onClearAll}
+                className="text-xs text-red-400 hover:text-red-300 transition-colors"
               >
-                <Copy className="w-3 h-3" />
-                복사
+                전체 삭제
               </button>
-            </div>
-            <div className="p-3 bg-card border border-navy-700 rounded-lg text-sm text-[#e4e6eb] max-h-40 overflow-y-auto">
-              {processingState.transcript}
-            </div>
+            )}
           </div>
-        )}
 
-        {/* 오디오 플레이어 */}
-        {processingState?.audioUrl && (
-          <div className="mt-6">
-            <h4 className="text-sm font-medium text-[#e4e6eb] mb-2">합성 오디오</h4>
-            <div className="flex items-center gap-3 p-3 bg-card border border-navy-700 rounded-lg">
-              <button
-                onClick={() => setIsPlaying(!isPlaying)}
-                className="
-                  w-10 h-10 rounded-full bg-accent hover:bg-accent-hover
-                  flex items-center justify-center transition-colors
-                "
-              >
-                {isPlaying ? (
-                  <Pause className="w-5 h-5 text-white" />
-                ) : (
-                  <Play className="w-5 h-5 text-white ml-0.5" />
-                )}
-              </button>
-              <div className="flex-1 h-2 bg-navy-800 rounded-full overflow-hidden">
-                <div className="h-full bg-accent w-0 transition-all" />
-              </div>
+          {transcriptHistory.length === 0 ? (
+            <div className="text-center text-[#7a7d8c] text-sm py-8">
+              녹음 버튼을 눌러 시작하세요
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="space-y-3">
+              {transcriptHistory.map((item, index) => (
+                <TranscriptCard
+                  key={item.id}
+                  item={item}
+                  index={index}
+                  onUpdate={onTranscriptUpdate}
+                  onDelete={onTranscriptDelete}
+                  onInsert={() => onTranscriptInsert(item.id, item.transcript)}
+                  onMergePrev={
+                    index > 0 && transcriptHistory[index - 1].sessionId === item.sessionId
+                      ? () => onMergeFragments(item.id, 'prev')
+                      : undefined
+                  }
+                  onMergeNext={
+                    index < transcriptHistory.length - 1 && transcriptHistory[index + 1].sessionId === item.sessionId
+                      ? () => onMergeFragments(item.id, 'next')
+                      : undefined
+                  }
+                  onSplit={() => onSplitFragment(item.id)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

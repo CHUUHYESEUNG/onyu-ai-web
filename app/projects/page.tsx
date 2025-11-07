@@ -46,10 +46,15 @@ export default function DashboardPage() {
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-navy-800 bg-navy-900/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-          <div className="flex items-center gap-3">
-            <BookOpen className="h-7 w-7 text-accent" />
-            <h1 className="text-xl font-semibold text-[#e4e6eb]">온유록</h1>
-          </div>
+          <Link href="/" className="flex items-center gap-3">
+            <Image
+              src="/logo/oy_logo_white.png"
+              alt="Onyu.ai 로고"
+              width={60}
+              height={16}
+              priority
+            />
+          </Link>
 
           <div className="flex items-center gap-3">
             <button className="rounded-lg p-2 text-[#a0a3b1] transition-colors hover:bg-card hover:text-[#e4e6eb]">
@@ -82,7 +87,7 @@ export default function DashboardPage() {
           {/* New Project Card */}
           <Link
             href="/projects/new"
-            className="group flex h-64 items-center justify-center rounded-2xl border-2 border-dashed border-navy-700 bg-card/30 transition-all hover:border-accent/50 hover:bg-card/50"
+            className="group flex items-center justify-center rounded-2xl border-2 border-dashed border-navy-700 bg-card/30 transition-all hover:border-accent/50 hover:bg-card/50 h-[328px]"
           >
             <div className="flex flex-col items-center gap-3 text-[#a0a3b1] transition-colors group-hover:text-accent">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-navy-800">
@@ -96,8 +101,8 @@ export default function DashboardPage() {
           {projects.map((project) => (
             <Link
               key={project.id}
-              href={`/projects/${project.id}/edit`}
-              className="group relative overflow-hidden rounded-2xl bg-card transition-all hover:ring-2 hover:ring-accent/50"
+              href={`/projects/${project.id}/overview`}
+              className="group relative overflow-hidden rounded-2xl bg-card transition-all hover:ring-2 hover:ring-accent/50 h-[328px] flex flex-col"
             >
               {/* Thumbnail Background */}
               <div className="relative h-40 overflow-hidden">
