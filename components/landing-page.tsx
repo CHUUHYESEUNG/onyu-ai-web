@@ -1,127 +1,321 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
-import { BookOpen, Download, Mic, Sparkles } from "lucide-react";
+import Image from "next/image";
+import { useState } from "react";
+import {
+  Mic,
+  Sparkles,
+  BookOpen,
+  ShieldCheck,
+  Zap,
+  Workflow,
+  CheckCircle2,
+  ArrowRight,
+  Quote,
+} from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+const TRUST_METRICS = [
+  { label: "전자책/실물책 동시 제작", detail: "원클릭 워크플로우", icon: ShieldCheck },
+  { label: "48시간 내 첫 PDF", detail: "AI 편집 자동화", icon: Zap },
+  { label: "5인 협업 초대", detail: "가족/에디터 초대", icon: Workflow },
+];
+
+const FEATURE_BLOCKS = [
+  {
+    title: "AI가 질문부터 초안까지 생성",
+    subtitle: "인터뷰 설계",
+    bullets: ["세대·관계별 질문 추천", "녹음 가이드와 일정 관리", "실시간 전사 + 요약"],
+    image: "/capture/5.png",
+  },
+  {
+    title: "글 편집과 출판을 한 곳에서",
+    subtitle: "편집 · 출판",
+    bullets: ["타임라인 기반 섹션 편집", "PDF · 실물 · 오디오북 변환", "브랜드 커버 템플릿 제공"],
+    image: "/capture/3.png",
+    reverse: true,
+  },
+];
+
+const TESTIMONIALS = [
+  {
+    quote: "부모님 목소리를 그대로 담아 손주에게 전달할 수 있었어요. 질문과 편집을 온유가 도와줘서 생각보다 금방 완성했습니다.",
+    name: "김지연",
+    role: "가족 프로젝트 리더",
+  },
+  {
+    quote: "에디터로 참여했는데, 브라우저에서 바로 협업이 가능해 제작 공수가 크게 줄었습니다.",
+    name: "박도현",
+    role: "프리랜서 에디터",
+  },
+  {
+    quote: "한 번의 인터뷰로 PDF, 실물, 오디오북까지 의뢰할 수 있는 점이 결정적이었어요.",
+    name: "손민수",
+    role: "기업 HR 팀",
+  },
+];
 
 export function LandingPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0B0F0E] via-[#0D1211] to-[#0E1513]">
-      <section id="overview" className="relative overflow-hidden px-6 pt-32 pb-20">
-        <div className="absolute left-1/2 top-0 h-[800px] w-[800px] -translate-x-1/2 rounded-full bg-[#2BA08C]/10 blur-[120px]" />
-
-        <div className="relative mx-auto max-w-4xl text-center">
-          <div className="mb-6 flex justify-center">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#2BA08C]/30 bg-[#1F6F63]/20 px-4 py-2">
-              <Sparkles className="h-4 w-4 text-[#2BA08C]" />
-              <span className="text-sm text-[#E6F0ED]/80">AI가 도와주는 책 만들기</span>
-            </div>
-          </div>
-
-          <h1 className="mb-6 text-5xl font-semibold leading-snug text-[#E6F0ED]">
-            당신의 목소리가
-            <br />
-            한 편의 이야기로
-          </h1>
-
-          <p className="mx-auto mb-12 max-w-2xl text-xl leading-relaxed text-[#E6F0ED]/70">
-            누구나 쉽게 쓸 수 있는 나만의 자서전
-            <br />
-            말로 전하는 이야기를, 글로 남겨보세요.
-          </p>
-
-          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Link href="/projects">
-              <Button className="px-8 py-6" size="lg">
-                <Mic className="h-5 w-5" />
-                무료로 시작하기
-              </Button>
-            </Link>
-
-            <Button
-              variant="outline"
-              className="px-8 py-6 hover:shadow-[0_0_30px_rgba(43,160,140,0.25)]"
-              size="lg"
-            >
-              <BookOpen className="h-5 w-5" />
-              예시 보기
-            </Button>
-          </div>
-        </div>
-
-        <div className="relative mx-auto mt-20 max-w-5xl">
-          <div className="relative h-[300px] overflow-hidden rounded-2xl border border-[#2BA08C]/20 shadow-[0_0_50px_rgba(43,160,140,0.15)]">
-            <Image
-              src="https://images.unsplash.com/photo-1660914256311-918659fae88f?auto=format&fit=crop&w=1200&q=80"
-              alt="Audio waveform illustration"
-              fill
-              priority
-              sizes="(max-width: 768px) 100vw, 960px"
-              className="object-cover opacity-70"
-            />
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0E1513] via-transparent to-transparent" />
-          </div>
-        </div>
-      </section>
-
-      <section id="features" className="px-6 py-20">
-        <div className="mx-auto max-w-6xl">
-          <h2 className="mb-16 text-center text-3xl text-[#E6F0ED]">어떻게 작동하나요?</h2>
-
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-            <FeatureCard
-              icon={<Mic className="h-6 w-6 text-white" />}
-              title="1. 이야기를 들려주세요"
-              description="주제를 선택하고 자유롭게 이야기를 녹음하세요. 어린 시절, 직장 생활, 가족 이야기 등 원하는 주제를 선택할 수 있습니다."
-            />
-            <FeatureCard
-              icon={<Sparkles className="h-6 w-6 text-white" />}
-              title="2. AI가 정리해드려요"
-              description="음성을 텍스트로 변환하고, 핵심을 추출해 아름다운 문장으로 다듬어드립니다. 자동으로 챕터가 만들어집니다."
-            />
-            <FeatureCard
-              icon={<Download className="h-6 w-6 text-white" />}
-              title="3. 저장하고 공유하세요"
-              description="완성된 이야기를 PDF로 저장하거나 링크로 공유할 수 있습니다. 소중한 기억을 간직하세요."
-            />
-          </div>
-        </div>
-      </section>
-
-      <section id="guide" className="px-6 py-20">
-        <div className="mx-auto max-w-4xl text-center">
-          <div className="rounded-3xl border border-[#2BA08C]/30 bg-gradient-to-br from-[#0F3D35]/40 to-[#1F6F63]/20 p-12">
-            <h2 className="mb-6 text-3xl text-[#E6F0ED]">지금 바로 시작해보세요</h2>
-            <p className="mb-8 text-lg text-[#E6F0ED]/70">당신의 첫 이야기를 온유와 함께 만들어보세요.</p>
-            <Link href="/projects">
-              <Button className="px-10 py-6" size="lg">
-                <Mic className="h-5 w-5" />
-                무료로 시작하기
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
+    <div className="bg-white text-[#0C1523]">
+      <HeroSection />
+      <TrustSection />
+      {FEATURE_BLOCKS.map((block) => (
+        <FeatureSection key={block.title} {...block} />
+      ))}
+      <SolutionsSection />
+      <FeatureTabsSection />
+      <TestimonialSection />
+      <BottomCTA />
     </div>
   );
 }
 
-interface FeatureCardProps {
+function HeroSection() {
+  return (
+    <section className="relative overflow-hidden px-6 pt-32 pb-24">
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,#F4F6FB_0%,#FFFFFF_70%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(30,94,255,0.08),_transparent_60%)]" aria-hidden />
+      <div className="relative mx-auto flex max-w-5xl flex-col items-center text-center">
+        <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-[#E6EDFF] px-4 py-2 text-xs font-semibold text-[#4A6CF7]">
+          <Sparkles className="h-4 w-4" /> AI로 쉽게 자서전 만들기
+        </div>
+        <h1 className="text-4xl font-bold text-[#0C1523] sm:text-5xl">
+          목소리만 녹음하면 <span className="text-[#1E5EFF]">AI 온유</span>가
+          <br /> 자서전 제작을 끝까지 돕습니다.
+        </h1>
+        <p className="mt-6 max-w-3xl text-lg text-[#5C6476]">
+          인터뷰 질문 설계부터 전사·편집·출판까지 한 번의 흐름으로 제공하는 온유 AI.<br />
+          개인, 가족, 기업 인터뷰를 빠르게 기록하고
+          멀티 포맷으로 남겨보세요.
+        </p>
+        <div className="mt-8 flex flex-wrap justify-center gap-4">
+          <Link href="/projects/new" className="flex items-center gap-2 rounded-full bg-[#1E5EFF] px-6 py-3 text-sm font-semibold text-white">
+            <Mic className="h-4 w-4" /> 무료로 자서전 시작하기
+          </Link>
+          <Link
+            href="/projects"
+            className="flex items-center gap-2 rounded-full border border-[#D2D9EF] px-6 py-3 text-sm font-semibold text-[#1E5EFF]"
+          >
+            <BookOpen className="h-4 w-4" /> 제품 데모 보기
+          </Link>
+        </div>
+        <div className="relative mt-16 w-full max-w-4xl rounded-[32px] border border-[#E5E9F5] bg-white p-4 shadow-[0_20px_80px_rgba(20,36,79,0.08)]">
+          <Image src="/capture/5.png" alt="Onyu dashboard" width={1280} height={720} className="w-full rounded-[24px] border border-[#E5E9F5]" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TrustSection() {
+  return (
+    <section className="px-6 py-16">
+      <div className="mx-auto max-w-5xl rounded-3xl border border-[#E5E9F5] bg-white px-8 py-6 shadow-sm">
+        <p className="text-center text-sm font-semibold text-[#1E5EFF]">전국 120+ 가족 · 기업 팀이 온유를 이용 중</p>
+        <div className="mt-6 grid gap-6 text-center text-sm text-[#5C6476] md:grid-cols-3">
+          {TRUST_METRICS.map(({ label, detail, icon: Icon }) => (
+            <div key={label} className="space-y-2">
+              <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[#E6EDFF]">
+                <Icon className="h-5 w-5 text-[#1E5EFF]" />
+              </div>
+              <p className="text-lg font-semibold text-[#0C1523]">{label}</p>
+              <p>{detail}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+type FeatureSectionProps = {
+  title: string;
+  subtitle: string;
+  bullets: string[];
+  image: string;
+  reverse?: boolean;
+};
+
+function FeatureSection({ title, subtitle, bullets, image, reverse }: FeatureSectionProps) {
+  return (
+    <section className="px-6 py-16">
+      <div className={`mx-auto flex max-w-5xl flex-col gap-10 ${reverse ? "lg:flex-row-reverse" : "lg:flex-row"}`}>
+        <div className="flex-1 space-y-4">
+          <p className="text-sm font-semibold text-[#1E5EFF]">{subtitle}</p>
+          <h3 className="text-3xl font-bold text-[#0C1523]">{title}</h3>
+          <ul className="space-y-3 text-sm text-[#5C6476]">
+            {bullets.map((bullet) => (
+              <li key={bullet} className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-[#1E5EFF]" /> {bullet}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="flex-1">
+          <div className="rounded-[32px] border border-[#E5E9F5] bg-white p-4 shadow-[0_20px_80px_rgba(20,36,79,0.08)]">
+            <Image src={image} alt={title} width={1200} height={760} className="w-full rounded-[24px] border border-[#E5E9F5]" />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function SolutionsSection() {
+  return (
+    <section className="px-6 py-16">
+      <div className="mx-auto max-w-5xl rounded-3xl border border-[#E5E9F5] bg-[#F7F9FD] px-8 py-10">
+        <div className="grid gap-6 md:grid-cols-3">
+          <SolutionCard
+            icon={<ShieldCheck className="h-6 w-6 text-[#1E5EFF]" />}
+            title="보안형 음성 보관"
+            description="Supabase 기반 저장소로 음성·텍스트를 안전하게 보관"
+          />
+          <SolutionCard
+            icon={<Zap className="h-6 w-6 text-[#1E5EFF]" />}
+            title="48시간 출판"
+            description="AI 편집 워크플로우로 48시간 내 PDF·ePub 초안을 전달"
+          />
+          <SolutionCard
+            icon={<Workflow className="h-6 w-6 text-[#1E5EFF]" />}
+            title="워크플로우 자동화"
+            description="녹음 → 전사 → 섹션 생성 → 출판 의뢰까지 자동 연결"
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+interface SolutionCardProps {
   icon: React.ReactNode;
   title: string;
   description: string;
 }
 
-function FeatureCard({ icon, title, description }: FeatureCardProps) {
+function SolutionCard({ icon, title, description }: SolutionCardProps) {
   return (
-    <div className="rounded-2xl border border-[#2BA08C]/20 bg-[#0F3D35]/20 p-8 transition-colors hover:border-[#2BA08C]/40">
-      <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[#2BA08C] to-[#1F6F63]">
-        {icon}
-      </div>
-      <h3 className="mb-4 text-lg text-[#E6F0ED]">{title}</h3>
-      <p className="text-sm leading-relaxed text-[#E6F0ED]/70">{description}</p>
+    <div className="rounded-[24px] border border-white/60 bg-white p-6 shadow-sm">
+      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#E6EDFF]">{icon}</div>
+      <p className="text-lg font-semibold text-[#0C1523]">{title}</p>
+      <p className="mt-2 text-sm text-[#5C6476]">{description}</p>
     </div>
+  );
+}
+
+const FEATURE_TABS = [
+  {
+    name: "AI Interview",
+    description: "세대/관계별 질문 템플릿과 타임라인 가이드를 제공해 누구나 쉽게 인터뷰를 진행할 수 있습니다.",
+    image: "/thumbnail.png",
+    bullets: ["연령대별 질문 120+ 문항", "프로젝트별 스크립트 자동 생성", "알림과 일정 자동화"],
+  },
+  {
+    name: "Voice Workspace",
+    description: "웹에서 바로 녹음하고 실시간 전사·요약을 받을 수 있어, 말만 하면 초안이 탄생합니다.",
+    image: "/capture/2.png",
+    bullets: ["실시간 전사 + 키워드 추출", "소단락 자동 분할", "노이즈 제거 및 음질 보정"],
+  },
+  {
+    name: "Editing Studio",
+    description: "타임라인 기반의 에디터로 각 챕터를 정리하고, 가족·에디터와 동시에 협업할 수 있습니다.",
+    image: "/capture/3.png",
+    bullets: ["드래그 앤 드롭 섹션 편집", "자동 요약 카드", "협업자 코멘트"],
+  },
+  {
+    name: "Publishing Center",
+    description: "PDF, 실물 하드커버, 오디오북까지 한 화면에서 의뢰하고 진행 상황을 추적합니다.",
+    image: "/capture/4.png",
+    bullets: ["커버/내지 템플릿", "제작 진행 알림", "샘플 미리보기"],
+  },
+];
+
+function FeatureTabsSection() {
+  const [activeTab, setActiveTab] = useState(0);
+  const current = FEATURE_TABS[activeTab];
+
+  return (
+    <section className="px-6 py-16">
+      <div className="mx-auto max-w-5xl rounded-3xl border border-[#E5E9F5] bg-white p-10 shadow-sm">
+        <div className="flex flex-wrap justify-center gap-4">
+          {FEATURE_TABS.map((tab, idx) => (
+            <button
+              key={tab.name}
+              onClick={() => setActiveTab(idx)}
+              className={`rounded-full border px-5 py-2 text-sm font-semibold ${idx === activeTab ? "border-[#1E5EFF] bg-[#E6EDFF] text-[#1E5EFF]" : "border-[#E5E9F5] text-[#5C6476]"}`}
+            >
+              {tab.name}
+            </button>
+          ))}
+        </div>
+        <div className="mt-10 flex flex-col gap-10 lg:flex-row">
+          <div className="flex-1 space-y-4">
+            <h3 className="text-3xl font-bold text-[#0C1523]">{current.name}</h3>
+            <p className="text-sm text-[#5C6476]">{current.description}</p>
+            <ul className="space-y-3 text-sm text-[#5C6476]">
+              {current.bullets.map((item) => (
+                <li key={item} className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-[#1E5EFF]" /> {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="flex-1">
+            <div className="rounded-[24px] border border-[#E5E9F5] bg-white p-4 shadow-[0_10px_40px_rgba(20,36,79,0.08)]">
+              <Image src={current.image} alt={current.name} width={1200} height={760} className="w-full rounded-[16px] border border-[#E5E9F5]" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TestimonialSection() {
+  return (
+    <section className="px-6 py-16">
+      <div className="mx-auto max-w-5xl rounded-3xl border border-[#E5E9F5] bg-white p-10 shadow-sm">
+        <p className="text-center text-sm font-semibold text-[#1E5EFF]">실제 사용 후기</p>
+        <h3 className="mt-2 text-center text-3xl font-bold text-[#0C1523]">온유로 자서전을 완성한 사람들의 이야기</h3>
+        <div className="mt-8 grid gap-6 md:grid-cols-3">
+          {TESTIMONIALS.map((item) => (
+            <div key={item.name} className="rounded-2xl border border-[#F1F3FB] bg-[#FAFBFF] p-6 text-sm text-[#5C6476]">
+              <div className="my-6 flex justify-center">
+                <Image src="/logo/oy_logo_black.png" alt="profile" width={80} height={40} className="rounded-full border border-[#E5E9F5]" />
+              </div>
+              <div className="flex justify-center">
+                <Quote className="mb-3 h-5 w-5 text-[#1E5EFF]" />
+              </div>
+              <p className="text-center mt-2 ">“{item.quote}”</p>
+              <p className="text-center mt-4 font-semibold text-[#0C1523]">{item.name}</p>
+              <p className="text-center text-xs text-[#8A93A8]">{item.role}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function BottomCTA() {
+  return (
+    <section className="px-6 pb-24">
+      <div className="mx-auto flex max-w-5xl flex-col gap-6 rounded-[32px] border border-[#0B1F4D] bg-[#0B1F4D] px-10 py-12 text-white md:flex-row md:items-center md:justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-white/60">Get Started</p>
+          <h3 className="mt-3 text-3xl font-bold">지금 온유와 함께 기록을 시작해보세요</h3>
+          <p className="mt-3 text-sm text-white/80">AI 기반 인터뷰와 편집 자동화로 단 2주 안에 자서전을 완성할 수 있습니다.</p>
+        </div>
+        <div className="flex flex-col gap-3 text-sm">
+          <Link href="/projects/new" className="flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 font-semibold text-[#0B1F4D]">
+            프로젝트 만들기 <ArrowRight className="h-4 w-4" />
+          </Link>
+          <Link href="/projects" className="flex items-center justify-center gap-2 rounded-full border border-white/30 px-6 py-3 text-white/80">
+            제품 문의하기
+          </Link>
+        </div>
+      </div>
+    </section>
   );
 }
