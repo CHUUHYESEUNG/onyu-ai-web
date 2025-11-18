@@ -138,3 +138,7 @@ AI가 당신의 이야기를 듣고, 정리하고, 당신의 음성으로 다시
 [음성 복제 기술 | **커스텀 음성(Custom Voice)**](https://www.notion.so/Custom-Voice-2a12a84c56b3801aa864da2cffdc67a5?pvs=21)
 
 [개발 진행 **단계별(1~7단계) 개발 플랜**](https://www.notion.so/1-7-2a12a84c56b380e09117c8aeb2ef79c6?pvs=21)
+
+
++ 경쟁사
+윌라, 오디언, 밀리의서재
