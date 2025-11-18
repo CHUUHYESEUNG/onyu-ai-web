@@ -13,10 +13,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 
-// OpenAI 클라이언트 초기화
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// OpenAI 클라이언트 초기화 (lazy initialization으로 빌드 에러 방지)
+let openai: OpenAI | null = null;
+
+function getOpenAIClient(): OpenAI {
+  if (!openai) {
+    // Azure OpenAI 지원
+    const apiKey = process.env.OPENAI_API_KEY || process.env.NEXT_PUBLIC_AZURE_OPENAI_API_KEY;
+    const azureEndpoint = process.env.NEXT_PUBLIC_AZURE_OPENAI_ENDPOINT;
+
+    if (!apiKey) {
+      throw new Error('OpenAI API key is not configured');
+    }
+
+    // Azure OpenAI 사용 시
+    if (azureEndpoint) {
+      openai = new OpenAI({
+        apiKey,
+        baseURL: `${azureEndpoint}/openai/deployments`,
+        defaultQuery: { 'api-version': '2024-02-15-preview' },
+        defaultHeaders: { 'api-key': apiKey },
+      } as any);
+    } else {
+      // 일반 OpenAI 사용 시
+      openai = new OpenAI({ apiKey });
+    }
+  }
+  return openai;
+}
 
 interface Subsection {
   title: string;
@@ -63,7 +87,8 @@ export async function POST(request: NextRequest) {
     const userPrompt = getUserPrompt(text, sectionTitle, targetSubsections);
 
     // 3. OpenAI API 호출
-    const completion = await openai.chat.completions.create({
+    const client = getOpenAIClient();
+    const completion = await client.chat.completions.create({
       model: 'gpt-4-turbo-preview',
       messages: [
         { role: 'system', content: systemPrompt },

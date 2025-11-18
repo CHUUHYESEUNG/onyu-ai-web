@@ -11,11 +11,14 @@ const ensurePublicEnv = () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+  // 빌드 시점에는 환경변수가 없을 수 있으므로 더미 값 반환
+  // 실제 런타임에 API 호출 시 적절한 환경변수가 설정되어야 함
   if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error(
-      'Supabase 환경 변수가 설정되지 않았습니다. .env.local 파일을 확인하세요.\n' +
-      '필요한 변수: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY'
-    );
+    console.warn('Supabase 환경 변수가 설정되지 않았습니다. 빌드 시점에서는 무시됩니다.');
+    return {
+      supabaseUrl: 'https://placeholder.supabase.co',
+      supabaseAnonKey: 'placeholder-key'
+    };
   }
 
   return { supabaseUrl, supabaseAnonKey };
