@@ -3,6 +3,7 @@
 import { useState, type Dispatch, type SetStateAction } from "react";
 import type { TimelineEvent } from "@/types/edit";
 import { Button } from "@/components/ui/button";
+import { FileText, Mic, Upload } from "lucide-react";
 
 export interface SectionInputState {
   title: string;
@@ -12,19 +13,17 @@ export interface SectionInputState {
 }
 
 interface AddSectionModalProps {
-  mode: "text" | "voice" | "file";
   events: TimelineEvent[];
   form: SectionInputState;
   isOpen: boolean;
   isLoading: boolean;
   onClose: () => void;
   onFormChange: Dispatch<SetStateAction<SectionInputState>>;
-  onSubmit: () => Promise<void>;
+  onSubmit: (mode: "text" | "voice" | "file") => Promise<void>;
   onStartRecording?: () => void;
 }
 
 export function AddSectionModal({
-  mode,
   events,
   form,
   isOpen,
@@ -35,6 +34,7 @@ export function AddSectionModal({
   onStartRecording,
 }: AddSectionModalProps) {
   const [error, setError] = useState<string | null>(null);
+  const [selectedMode, setSelectedMode] = useState<"text" | "voice" | "file" | null>(null);
 
   if (!isOpen) {
     return null;
@@ -42,10 +42,15 @@ export function AddSectionModal({
 
   const handleClose = () => {
     setError(null);
+    setSelectedMode(null);
     onClose();
   };
 
   const handleSubmit = async () => {
+    if (!selectedMode) {
+      setError("작성 방식을 선택해주세요.");
+      return;
+    }
     if (!form.eventId) {
       setError("대주제를 선택해주세요.");
       return;
@@ -54,8 +59,9 @@ export function AddSectionModal({
       setError("소주제 제목을 입력해주세요.");
       return;
     }
-    await onSubmit();
+    await onSubmit(selectedMode);
     setError(null);
+    setSelectedMode(null);
   };
 
   const handleStartRecording = async () => {
@@ -68,8 +74,9 @@ export function AddSectionModal({
       return;
     }
     // 소주제 생성 후 녹음 시작
-    await onSubmit();
+    await onSubmit("voice");
     setError(null);
+    setSelectedMode(null);
     if (onStartRecording) {
       onStartRecording();
     }
@@ -78,10 +85,74 @@ export function AddSectionModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={handleClose} />
-      <div className="relative z-10 w-full max-w-lg rounded-2xl border border-accent/30 bg-card p-6 shadow-2xl shadow-black/50">
+      <div className="relative z-10 w-full max-w-lg rounded-2xl border border-accent/30 bg-navy-900 p-6 shadow-2xl shadow-black/50">
         <h2 className="text-xl font-semibold text-[#e4e6eb]">새로운 소주제 추가</h2>
         <p className="mt-1 text-sm text-[#a0a3b1]">대주제 안에 세부 이야기를 추가하고 바로 편집할 수 있습니다.</p>
         <div className="mt-6 space-y-4">
+          {/* 작성 방식 선택 - 인라인으로 통합 */}
+          <div className="space-y-2">
+            <label className="text-sm text-[#a0a3b1]">작성 방식</label>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedMode("text");
+                  setError(null);
+                }}
+                className={`
+                  flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all
+                  focus:outline-none focus:ring-2 focus:ring-accent
+                  ${
+                    selectedMode === "text"
+                      ? "border-accent bg-accent/10 text-accent"
+                      : "border-navy-700 bg-card text-[#a0a3b1] hover:border-accent/50"
+                  }
+                `}
+              >
+                <FileText className="w-6 h-6" />
+                <span className="text-xs font-medium">텍스트</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedMode("voice");
+                  setError(null);
+                }}
+                className={`
+                  flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all
+                  focus:outline-none focus:ring-2 focus:ring-accent
+                  ${
+                    selectedMode === "voice"
+                      ? "border-accent bg-accent/10 text-accent"
+                      : "border-navy-700 bg-card text-[#a0a3b1] hover:border-accent/50"
+                  }
+                `}
+              >
+                <Mic className="w-6 h-6" />
+                <span className="text-xs font-medium">음성 녹음</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedMode("file");
+                  setError(null);
+                }}
+                className={`
+                  flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all
+                  focus:outline-none focus:ring-2 focus:ring-accent
+                  ${
+                    selectedMode === "file"
+                      ? "border-accent bg-accent/10 text-accent"
+                      : "border-navy-700 bg-card text-[#a0a3b1] hover:border-accent/50"
+                  }
+                `}
+              >
+                <Upload className="w-6 h-6" />
+                <span className="text-xs font-medium">파일</span>
+              </button>
+            </div>
+          </div>
+
           <label className="space-y-2 text-sm text-[#a0a3b1]">
             대주제 선택
             <select
@@ -90,7 +161,7 @@ export function AddSectionModal({
                 onFormChange((prev) => ({ ...prev, eventId: e.target.value }));
                 setError(null);
               }}
-              className="w-full rounded-lg border border-navy-700 bg-navy-900 px-4 py-2 text-[#e4e6eb] focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50"
+              className="w-full rounded-lg border border-navy-700 bg-navy-900 px-4 py-2 text-[#e4e6eb] focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent"
             >
               <option value="" disabled>
                 대주제를 선택하세요
@@ -112,12 +183,12 @@ export function AddSectionModal({
                 onFormChange((prev) => ({ ...prev, title: e.target.value }));
                 setError(null);
               }}
-              className="w-full rounded-lg border border-navy-700 bg-navy-900 px-4 py-2 text-[#e4e6eb] placeholder:text-[#7a7d8c] focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50"
+              className="w-full rounded-lg border border-navy-700 bg-navy-900 px-4 py-2 text-[#e4e6eb] placeholder:text-[#7a7d8c] focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent"
               placeholder="예: 첫 출근 날의 기억"
             />
           </label>
 
-          {mode === "text" ? (
+          {selectedMode === "text" && (
             <>
               <label className="space-y-2 text-sm text-[#a0a3b1]">
                 요약 (선택)
@@ -125,7 +196,7 @@ export function AddSectionModal({
                   type="text"
                   value={form.excerpt}
                   onChange={(e) => onFormChange((prev) => ({ ...prev, excerpt: e.target.value }))}
-                  className="w-full rounded-lg border border-navy-700 bg-navy-900 px-4 py-2 text-[#e4e6eb] placeholder:text-[#7a7d8c] focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50"
+                  className="w-full rounded-lg border border-navy-700 bg-navy-900 px-4 py-2 text-[#e4e6eb] placeholder:text-[#7a7d8c] focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent"
                   placeholder="한두 문장으로 요약을 남겨보세요."
                 />
               </label>
@@ -136,14 +207,16 @@ export function AddSectionModal({
                   rows={4}
                   value={form.content}
                   onChange={(e) => onFormChange((prev) => ({ ...prev, content: e.target.value }))}
-                  className="w-full rounded-lg border border-navy-700 bg-navy-900 px-4 py-2 text-[#e4e6eb] placeholder:text-[#7a7d8c] focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50"
+                  className="w-full rounded-lg border border-navy-700 bg-navy-900 px-4 py-2 text-[#e4e6eb] placeholder:text-[#7a7d8c] focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent"
                   placeholder="기억하고 싶은 내용이나 추가하고 싶은 문장을 적어두세요."
                 />
               </label>
             </>
-          ) : mode === "voice" ? (
+          )}
+
+          {selectedMode === "voice" && (
             <div className="rounded-xl border border-accent/30 bg-accent/5 p-4">
-              <div className="flex items-start gap-3 mb-3">
+              <div className="flex items-start gap-3">
                 <div className="flex-shrink-0 w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
                   <span className="text-lg">🎤</span>
                 </div>
@@ -155,7 +228,9 @@ export function AddSectionModal({
                 </div>
               </div>
             </div>
-          ) : (
+          )}
+
+          {selectedMode === "file" && (
             <div className="rounded-xl border border-navy-700 bg-navy-900 p-4 text-xs text-[#a0a3b1]">
               <p className="mb-2">파일을 업로드하면 전사/요약 후 소단락이 생성됩니다.</p>
               <p>생성된 소단락은 우측 패널에서 확인하고 편집할 수 있습니다.</p>
@@ -168,9 +243,9 @@ export function AddSectionModal({
           <Button variant="outline" onClick={handleClose} className="border-navy-700 text-[#e4e6eb] hover:bg-card">
             취소
           </Button>
-          {mode === "voice" ? (
+          {selectedMode === "voice" ? (
             <Button onClick={handleStartRecording} disabled={isLoading} className="gap-2">
-              <span>🎤</span>
+              <Mic className="w-4 h-4" />
               {isLoading ? "생성 중..." : "소주제 추가 & 녹음 시작"}
             </Button>
           ) : (

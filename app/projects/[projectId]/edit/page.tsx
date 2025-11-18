@@ -96,7 +96,6 @@ export default function EditPage() {
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
   const [isEditEventOpen, setIsEditEventOpen] = useState(false);
   const [isAddSectionOpen, setIsAddSectionOpen] = useState(false);
-  const [isAddSectionModeOpen, setIsAddSectionModeOpen] = useState(false);
   const [eventForm, setEventForm] = useState({ label: '', date: '', description: '' });
   const [editEventForm, setEditEventForm] = useState({ label: '', date: '', description: '' });
   const initialSectionForm = { title: '', excerpt: '', content: '', eventId: '' };
@@ -106,7 +105,6 @@ export default function EditPage() {
   const [isCreatingEvent, setIsCreatingEvent] = useState(false);
   const [isUpdatingEvent, setIsUpdatingEvent] = useState(false);
   const [isCreatingSection, setIsCreatingSection] = useState(false);
-  const [sectionOption, setSectionOption] = useState<'text' | 'voice' | 'file'>('text');
 
   // 패널 토글 상태
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
@@ -580,13 +578,6 @@ export default function EditPage() {
       content: '',
       eventId: defaultEventId,
     });
-    setSectionOption('text');
-    setIsAddSectionModeOpen(true);
-  };
-
-  const openAddSectionModalForMode = (mode: 'text' | 'voice' | 'file') => {
-    setSectionOption(mode);
-    // voice 모드일 때는 모달에서 "녹음 시작하기" 버튼 클릭 시 패널 펼침
     setIsAddSectionOpen(true);
   };
 
@@ -760,7 +751,16 @@ export default function EditPage() {
           onEventSelect={handleEventSelect}
           onReorder={handleTimelineReorder}
           onAddEvent={openAddEventModal}
-          onEditEvent={openEditEventModal}
+          onUpdateEvent={async (eventId, label, date) => {
+            await updateTimelineEvent(eventId, { label, date });
+            setTimeline((prev) =>
+              prev.map((event) =>
+                event.id === eventId
+                  ? { ...event, label, date }
+                  : event
+              )
+            );
+          }}
         />
 
         <div className="flex gap-4 h-[calc(100vh-220px)] relative">
@@ -911,63 +911,6 @@ export default function EditPage() {
           </div>
         </div>
       )}
-        {isAddSectionModeOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsAddSectionModeOpen(false)} />
-          <div className="relative z-10 w-full max-w-md rounded-2xl border border-accent/30 bg-card p-6 shadow-2xl shadow-black/50">
-            <h2 className="text-xl font-semibold text-[#e4e6eb]">소주제 입력 방식 선택</h2>
-            <p className="mt-1 text-sm text-[#a0a3b1]">
-              새로운 소주제를 어떻게 기록할지 선택해주세요. 언제든 다른 방식을 다시 선택할 수 있습니다.
-            </p>
-            <div className="mt-6 space-y-3">
-              <button
-                onClick={() => {
-                  openAddSectionModalForMode('text');
-                  setIsAddSectionModeOpen(false);
-                }}
-                className="w-full rounded-xl border border-navy-700 bg-navy-900 px-4 py-3 text-left text-[#e4e6eb] transition-colors hover:border-accent/60 hover:bg-card-hover"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold">텍스트로 작성</span>
-                  <span className="text-xs text-accent">추천</span>
-                </div>
-                <p className="mt-1 text-xs text-[#7a7d8c]">직접 입력하면서 내용을 정리합니다.</p>
-              </button>
-
-              <button
-                onClick={() => {
-                  openAddSectionModalForMode('voice');
-                  setIsAddSectionModeOpen(false);
-                }}
-                className="w-full rounded-xl border border-navy-700 bg-navy-900 px-4 py-3 text-left text-[#e4e6eb] transition-colors hover:border-accent/60 hover:bg-card-hover"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold">음성으로 작성</span>
-                </div>
-                <p className="mt-1 text-xs text-[#7a7d8c]">말로 기록하고 AI가 소단락으로 정리해줍니다.</p>
-              </button>
-
-              <button
-                onClick={() => {
-                  openAddSectionModalForMode('file');
-                  setIsAddSectionModeOpen(false);
-                }}
-                className="w-full rounded-xl border border-navy-700 bg-navy-900 px-4 py-3 text-left text-[#e4e6eb] transition-colors hover:border-accent/60 hover:bg-card-hover"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold">파일 가져오기</span>
-                </div>
-                <p className="mt-1 text-xs text-[#7a7d8c]">음성/텍스트 파일을 업로드하면 자동으로 정리됩니다.</p>
-              </button>
-            </div>
-            <div className="mt-6 flex justify-end">
-              <Button variant="outline" onClick={() => setIsAddSectionModeOpen(false)} className="border-navy-700 text-[#e4e6eb]">
-                닫기
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
 
         {isEditEventOpen && selectedEventId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
@@ -1029,7 +972,6 @@ export default function EditPage() {
       )}
 
         <AddSectionModal
-          mode={sectionOption}
           events={timeline}
           form={sectionForm}
           isOpen={isAddSectionOpen}
@@ -1039,8 +981,8 @@ export default function EditPage() {
             setSectionForm(initialSectionForm);
           }}
           onFormChange={setSectionForm}
-          onSubmit={async () => {
-            await handleCreateSection(sectionForm, sectionOption);
+          onSubmit={async (mode) => {
+            await handleCreateSection(sectionForm, mode);
           }}
           onStartRecording={() => {
             setIsAddSectionOpen(false);
