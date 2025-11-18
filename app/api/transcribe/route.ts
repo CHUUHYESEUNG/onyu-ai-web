@@ -11,10 +11,30 @@
  * 4. 결과 반환
  */
 
-// @ts-nocheck - Supabase 타입 이슈 임시 우회
-
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
+import type { Database } from '@/types/database';
+
+type AudioAssetUpdate = Database['public']['Tables']['audio_assets']['Update'];
+
+interface DeepgramWord {
+  word: string;
+  start: number;
+  end: number;
+  confidence: number;
+}
+
+interface DeepgramResponse {
+  results: {
+    channels: Array<{
+      alternatives: Array<{
+        transcript: string;
+        confidence: number;
+        words: DeepgramWord[];
+      }>;
+    }>;
+  };
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -49,12 +69,14 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. DB 상태 업데이트 (전사 시작)
+    const updateStart: AudioAssetUpdate = {
+      status: 'transcribing',
+      progress: 10,
+    };
+
     await supabaseAdmin
       .from('audio_assets')
-      .update({
-        status: 'transcribing' as any,
-        progress: 10 as any,
-      } as any)
+      .update(updateStart)
       .eq('id', assetId);
 
     // 3. Deepgram API 호출
@@ -83,12 +105,14 @@ export async function POST(request: NextRequest) {
       console.error('Deepgram API error:', response.status, errorText);
 
       // DB 에러 상태 업데이트
+      const updateError: AudioAssetUpdate = {
+        status: 'failed',
+        error_message: `Deepgram API 오류: ${response.status}`,
+      };
+
       await supabaseAdmin
         .from('audio_assets')
-        .update({
-          status: 'failed' as any,
-          error_message: `Deepgram API 오류: ${response.status}` as any,
-        } as any)
+        .update(updateError)
         .eq('id', assetId);
 
       return NextResponse.json(
@@ -98,19 +122,21 @@ export async function POST(request: NextRequest) {
     }
 
     // 4. 전사 결과 파싱
-    const data = await response.json();
+    const data: DeepgramResponse = await response.json();
     const channel = data.results?.channels?.[0];
     const alternative = channel?.alternatives?.[0];
 
     if (!alternative || !alternative.transcript) {
       // 전사 결과가 없는 경우 (무음 파일 등)
+      const updateEmpty: AudioAssetUpdate = {
+        status: 'transcribed',
+        transcript: '',
+        progress: 100,
+      };
+
       await supabaseAdmin
         .from('audio_assets')
-        .update({
-          status: 'transcribed' as any,
-          transcript: '' as any,
-          progress: 100 as any,
-        } as any)
+        .update(updateEmpty)
         .eq('id', assetId);
 
       return NextResponse.json({
@@ -126,13 +152,15 @@ export async function POST(request: NextRequest) {
     const words = alternative.words || [];
 
     // 5. DB 업데이트 (전사 완료)
+    const updateComplete: AudioAssetUpdate = {
+      status: 'transcribed',
+      transcript: transcript,
+      progress: 100,
+    };
+
     await supabaseAdmin
       .from('audio_assets')
-      .update({
-        status: 'transcribed' as any,
-        transcript: transcript as any,
-        progress: 100 as any,
-      } as any)
+      .update(updateComplete)
       .eq('id', assetId);
 
     // 6. 성공 응답
@@ -151,12 +179,14 @@ export async function POST(request: NextRequest) {
       const assetId = formData.get('assetId') as string | null;
 
       if (assetId) {
+        const updateCatchError: AudioAssetUpdate = {
+          status: 'failed',
+          error_message: error instanceof Error ? error.message : '알 수 없는 오류',
+        };
+
         await supabaseAdmin
           .from('audio_assets')
-          .update({
-            status: 'failed' as any,
-            error_message: (error instanceof Error ? error.message : '알 수 없는 오류') as any,
-          } as any)
+          .update(updateCatchError)
           .eq('id', assetId);
       }
     } catch (dbError) {
