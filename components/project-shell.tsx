@@ -26,7 +26,8 @@ const sidebarItems = [
 ];
 
 export function ProjectShell({ breadcrumb, children }: ProjectShellProps) {
-  const [collapsed, setCollapsed] = useState(true);
+  // 어르신 친화: 사이드바 기본 펼침 상태로, 자동 접힘 제거
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
     <div className="min-h-screen bg-[#05060C] text-white flex">
@@ -46,11 +47,10 @@ function ProjectSidebar({
   collapsed: boolean;
   setCollapsed: Dispatch<SetStateAction<boolean>>;
 }) {
+  // 어르신 친화: 자동 접힘/펼침 제거 (onMouseEnter/Leave 삭제)
   return (
     <nav
       className={`hidden ${collapsed ? "w-24" : "w-64"} flex-col border-r border-white/5 bg-[#03040a] py-6 md:flex transition-all duration-300`}
-      onMouseEnter={() => setCollapsed(false)}
-      onMouseLeave={() => setCollapsed(true)}
     >
       <div className="flex flex-col items-center gap-4 px-4">
         <button
@@ -88,27 +88,29 @@ function ProjectSidebar({
 function ProjectTopBar({ breadcrumb }: { breadcrumb: Array<{ label: string; href?: string }> }) {
   return (
     <header className="flex items-center justify-between border-b border-white/5 bg-[#05060C]/80 px-8 py-5">
-      <div className="flex items-center gap-2 text-sm text-white/60">
+      {/* 어르신 친화: 브레드크럼 크기 증가 (text-sm → text-lg) */}
+      <div className="flex items-center gap-3 text-lg text-white/80">
         {breadcrumb.map((crumb, index) => (
-          <span key={crumb.label} className="flex items-center gap-2">
+          <span key={crumb.label} className="flex items-center gap-3">
             {crumb.href ? (
-              <Link href={crumb.href} className="text-white hover:text-[#1E5EFF]">
+              <Link href={crumb.href} className="text-white hover:text-[#1E5EFF] font-medium">
                 {crumb.label}
               </Link>
             ) : (
-              <span className="text-white/40">{crumb.label}</span>
+              <span className="text-white font-semibold">{crumb.label}</span>
             )}
-            {index < breadcrumb.length - 1 && <span>/</span>}
+            {index < breadcrumb.length - 1 && <span className="text-white/40 text-xl">/</span>}
           </span>
         ))}
       </div>
-      <div className="flex items-center gap-3 text-sm">
-        <button className="rounded-full border border-white/10 px-4 py-2 text-white/70 hover:border-white/40">
+      {/* 어르신 친화: 버튼 크기 증가 */}
+      <div className="flex items-center gap-3 text-base">
+        <button className="rounded-full border border-white/10 px-5 py-3 text-white/80 hover:border-white/40 font-medium">
           업그레이드
         </button>
-        <button className="flex items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-white/80">
-          <span>장혜승</span>
-          <span className="h-8 w-8 rounded-full bg-[#1E5EFF]" />
+        <button className="flex items-center gap-3 rounded-full border border-white/10 px-5 py-3 text-white/90">
+          <span className="font-medium">장혜승</span>
+          <span className="h-10 w-10 rounded-full bg-[#1E5EFF]" />
         </button>
       </div>
     </header>

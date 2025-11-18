@@ -14,11 +14,12 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   ghost: "text-[#e4e6eb] hover:text-white hover:bg-white/10",
 };
 
+// 어르신 친화적 크기: 최소 48px, 권장 56px
 const SIZE_CLASSES: Record<ButtonSize, string> = {
-  sm: "h-9 px-4 text-sm",
-  md: "h-12 px-6 text-base",
-  lg: "h-14 px-8 text-lg",
-  icon: "h-12 w-12",
+  sm: "h-12 px-6 text-lg",    // 36px → 48px, 터치 타겟 최소 기준
+  md: "h-14 px-8 text-xl",    // 48px → 56px, 어르신 권장 크기
+  lg: "h-16 px-10 text-2xl",  // 56px → 64px, 주요 CTA용
+  icon: "h-14 w-14",          // 48px → 56px, 아이콘 버튼 확대
 };
 
 export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {

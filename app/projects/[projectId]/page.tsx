@@ -247,28 +247,27 @@ export default function ProjectHomePage() {
           ) : (
             <div className="space-y-4">
               {chapters.map((chapter) => (
-                <Link
+                <div
                   key={chapter.id}
-                  href={`/projects/${params.projectId}/chapter/${chapter.id}`}
-                  className="block bg-[#0E1513] hover:bg-[#0E1513]/80 rounded-2xl p-6 border border-[#2BA08C]/10 hover:border-[#2BA08C]/30 transition-all group"
+                  className="bg-[#0E1513] rounded-2xl p-6 border border-[#2BA08C]/10 hover:border-[#2BA08C]/30 transition-all"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-start gap-4 flex-1">
                       <div className="mt-1">{getChapterStatusIcon(chapter)}</div>
                       <div className="flex-1">
-                        <h3 className="text-xl font-semibold text-[#E6F0ED] mb-1 group-hover:text-[#2BA08C] transition-colors">
+                        <h3 className="text-xl font-semibold text-[#E6F0ED] mb-1">
                           {chapter.title}
                         </h3>
                         {chapter.description && (
-                          <p className="text-sm text-[#A8C3BC]">{chapter.description}</p>
+                          <p className="text-base text-[#A8C3BC]">{chapter.description}</p>
                         )}
-                        <div className="flex items-center gap-4 mt-3 text-sm text-[#A8C3BC]">
-                          <span className="flex items-center gap-1">
-                            <Mic className="h-4 w-4" />
+                        <div className="flex items-center gap-4 mt-3 text-base text-[#A8C3BC]">
+                          <span className="flex items-center gap-2">
+                            <Mic className="h-5 w-5" />
                             {chapter.totalSessions}개 세션
                           </span>
                           <span
-                            className={`px-3 py-1 rounded-full text-xs ${
+                            className={`px-3 py-1.5 rounded-full text-sm font-medium ${
                               chapter.status === 'completed'
                                 ? 'bg-green-500/10 text-green-400'
                                 : chapter.status === 'in_progress'
@@ -285,26 +284,49 @@ export default function ProjectHomePage() {
                         </div>
                       </div>
                     </div>
-
-                    <ChevronRight className="h-6 w-6 text-[#A8C3BC] group-hover:text-[#2BA08C] group-hover:translate-x-1 transition-all" />
                   </div>
 
                   {/* 진행률 바 */}
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-xs text-[#A8C3BC]">
+                  <div className="space-y-2 mb-4">
+                    <div className="flex justify-between text-sm text-[#A8C3BC]">
                       <span>
                         진행률: {chapter.completedSessions} / {chapter.totalSessions}
                       </span>
-                      <span>{getChapterProgress(chapter)}%</span>
+                      <span className="font-semibold">{getChapterProgress(chapter)}%</span>
                     </div>
-                    <div className="h-2 bg-[#0B0F0E] rounded-full overflow-hidden">
+                    <div className="h-3 bg-[#0B0F0E] rounded-full overflow-hidden">
                       <div
                         className="h-full bg-gradient-to-r from-[#1F6F63] to-[#2BA08C] transition-all duration-500"
                         style={{ width: `${getChapterProgress(chapter)}%` }}
                       />
                     </div>
                   </div>
-                </Link>
+
+                  {/* 명확한 CTA 버튼 - 어르신 친화적 */}
+                  <Link
+                    href={`/projects/${params.projectId}/chapter/${chapter.id}`}
+                    className="
+                      flex items-center justify-center gap-3
+                      w-full px-8 py-4
+                      bg-[#1F6F63] hover:bg-[#2BA08C]
+                      text-white text-lg font-semibold
+                      rounded-xl
+                      transition-all duration-200
+                      hover:shadow-lg hover:shadow-[#2BA08C]/30
+                      focus:outline-none focus:ring-4 focus:ring-[#2BA08C]/50
+                    "
+                  >
+                    <Play className="h-6 w-6" />
+                    <span>
+                      {chapter.status === 'completed'
+                        ? '챕터 다시 보기'
+                        : chapter.status === 'in_progress'
+                        ? '인터뷰 이어하기'
+                        : '인터뷰 시작하기'}
+                    </span>
+                    <ChevronRight className="h-6 w-6" />
+                  </Link>
+                </div>
               ))}
             </div>
           )}
