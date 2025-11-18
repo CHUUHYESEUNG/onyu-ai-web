@@ -37,7 +37,7 @@ export const getSupabaseClient = (): SupabaseClient<Database> => {
           eventsPerSecond: 10,
         },
       },
-    });
+    }) as SupabaseClient<Database>;
   }
 
   return supabaseClient;
@@ -57,32 +57,11 @@ export const getSupabaseAdminClient = (): SupabaseClient<Database> => {
           persistSession: false,
         },
       }
-    );
+    ) as SupabaseClient<Database>;
   }
 
   return supabaseAdminClient;
 };
-
-const bindClient = <T extends object>(resolve: () => T): T =>
-  new Proxy({} as T, {
-    get(_target, property, receiver) {
-      const client = resolve();
-      const value = Reflect.get(client, property, receiver);
-      return typeof value === 'function' ? value.bind(client) : value;
-    },
-    has(_target, property) {
-      const client = resolve();
-      return Reflect.has(client, property);
-    },
-    ownKeys() {
-      const client = resolve();
-      return Reflect.ownKeys(client);
-    },
-    getOwnPropertyDescriptor(_target, property) {
-      const client = resolve();
-      return Reflect.getOwnPropertyDescriptor(client, property);
-    },
-  });
 
 /**
  * 브라우저 및 서버 사이드에서 사용할 Supabase 클라이언트
@@ -94,7 +73,7 @@ const bindClient = <T extends object>(resolve: () => T): T =>
  *   .from('projects')
  *   .select('*');
  */
-export const supabase = bindClient<SupabaseClient<Database>>(getSupabaseClient);
+export const supabase: SupabaseClient<Database> = getSupabaseClient();
 
 /**
  * 서버 사이드 전용 Supabase 클라이언트 (Service Role)
@@ -110,7 +89,7 @@ export const supabase = bindClient<SupabaseClient<Database>>(getSupabaseClient);
  *   .from('admin_only_table')
  *   .select('*');
  */
-export const supabaseAdmin = bindClient<SupabaseClient<Database>>(getSupabaseAdminClient);
+export const supabaseAdmin: SupabaseClient<Database> = getSupabaseAdminClient();
 
 /**
  * Storage 헬퍼 함수

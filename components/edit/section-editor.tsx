@@ -1,9 +1,8 @@
 'use client';
 
 import { Section, TimelineEvent } from '@/types/edit';
-import { Save, X, History, Trash2, Plus, ChevronDown, ChevronUp } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { Separator } from '@/components/ui/separator';
+import { Save, X, History, Trash2, Plus, ChevronDown, ChevronUp, PanelRightOpen, PanelRightClose } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
 
 interface SectionEditorProps {
   section: Section | null;
@@ -14,43 +13,60 @@ interface SectionEditorProps {
 export function SectionEditor({ section, event, onSave }: SectionEditorProps) {
   const [content, setContent] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [subsections, setSubsections] = useState<Section['subsections']>([]);
   const [expandedSubsectionId, setExpandedSubsectionId] = useState<string | null>(null);
-  const [showSubsections, setShowSubsections] = useState(false);
+  const [showSubsectionsSidebar, setShowSubsectionsSidebar] = useState(false);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const lastContentRef = useRef('');
 
   useEffect(() => {
     if (section) {
       setContent(section.content);
       setSubsections(section.subsections ?? []);
-      setHasChanges(false);
       setExpandedSubsectionId(null);
+      lastContentRef.current = section.content;
     }
   }, [section]);
 
-  const handleSave = async () => {
+  // Auto-save with debounce
+  useEffect(() => {
     if (!section) return;
-    setIsSaving(true);
-    try {
-      await onSave(section.id, content, subsections);
-      setHasChanges(false);
-      if (section.subsections?.length) {
-        setSubsections(section.subsections);
-      }
-    } catch (error) {
-      console.error('Save failed:', error);
-    } finally {
-      setIsSaving(false);
-    }
-  };
+    if (content === lastContentRef.current) return;
 
-  const handleCancel = () => {
-    if (section) {
-      setContent(section.content);
-      setSubsections(section.subsections ?? []);
-      setHasChanges(false);
-      setExpandedSubsectionId(null);
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
     }
+
+    saveTimeoutRef.current = setTimeout(async () => {
+      setIsSaving(true);
+      try {
+        await onSave(section.id, content, subsections);
+        lastContentRef.current = content;
+        setLastSavedAt(new Date());
+      } catch (error) {
+        console.error('Auto-save failed:', error);
+      } finally {
+        setIsSaving(false);
+      }
+    }, 1500);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [content, section, subsections, onSave]);
+
+  // Format time ago
+  const getTimeAgo = () => {
+    if (!lastSavedAt) return '';
+    const seconds = Math.floor((Date.now() - lastSavedAt.getTime()) / 1000);
+    if (seconds < 5) return '방금 전';
+    if (seconds < 60) return `${seconds}초 전`;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}분 전`;
+    return '1시간 이상';
   };
 
   if (!section) {
@@ -68,43 +84,69 @@ export function SectionEditor({ section, event, onSave }: SectionEditorProps) {
   }
 
   return (
-    <div className="flex flex-col h-full bg-navy-900">
-      {/* 헤더 */}
-      <div className="p-4 border-b border-navy-700/30">
-        <div className="flex items-start justify-between mb-2">
-          <div className="flex-1">
-            <h2 className="text-xl font-semibold text-[#e4e6eb] mb-1">{section.title}</h2>
-            {event && (
-              <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-accent bg-accent/10 rounded">
-                {event.label}
-              </span>
-            )}
+    <div className="flex h-full bg-navy-900 relative">
+      {/* 메인 에디터 영역 */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* 최소화된 헤더: 실시간 저장 인디케이터 + 버전 보기 아이콘 */}
+        <div className="absolute top-4 right-4 flex items-center gap-3 z-10">
+          {/* 자동 저장 인디케이터 */}
+          <div className="flex items-center gap-2 text-xs text-[#a0a3b1]">
+            {isSaving ? (
+              <>
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
+                <span>저장 중...</span>
+              </>
+            ) : lastSavedAt ? (
+              <>
+                <div className="w-2 h-2 bg-green-400 rounded-full" />
+                <span>자동 저장됨 · {getTimeAgo()}</span>
+              </>
+            ) : null}
           </div>
+
+          {/* 버전 보기 아이콘 */}
           <button
             className="p-2 text-[#a0a3b1] hover:text-[#e4e6eb] hover:bg-card rounded transition-colors"
             title="버전 보기"
           >
-            <History className="w-5 h-5" />
+            <History className="w-4 h-4" />
           </button>
-        </div>
-      </div>
 
-      {/* 에디터 */}
-      <div className="flex-1 p-6 overflow-y-auto max-w-4xl mx-auto w-full">
-        <div className="space-y-6">
-          <div className="flex flex-col">
-            <label className="mb-2 text-sm text-[#a0a3b1]">본문 작성</label>
+          {/* 소단락 사이드바 토글 */}
+          {subsections && subsections.length > 0 && (
+            <button
+              onClick={() => setShowSubsectionsSidebar(!showSubsectionsSidebar)}
+              className="p-2 text-[#a0a3b1] hover:text-[#e4e6eb] hover:bg-card rounded transition-colors"
+              title={showSubsectionsSidebar ? '소단락 숨기기' : '소단락 보기'}
+            >
+              {showSubsectionsSidebar ? (
+                <PanelRightClose className="w-4 h-4" />
+              ) : (
+                <PanelRightOpen className="w-4 h-4" />
+              )}
+            </button>
+          )}
+        </div>
+
+        {/* 에디터 본문 */}
+        <div className="flex-1 p-6 overflow-y-auto">
+          <div className="max-w-4xl mx-auto w-full space-y-4">
+            {/* 인라인 섹션 제목 */}
+            <div className="space-y-1">
+              <h2 className="text-2xl font-semibold text-[#e4e6eb]">{section.title}</h2>
+              {event && (
+                <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-accent bg-accent/10 rounded">
+                  {event.label}
+                </span>
+              )}
+            </div>
+
+            {/* 본문 작성 textarea */}
             <textarea
               value={content}
-              onChange={(e) => {
-                setContent(e.target.value);
-                setHasChanges(
-                  e.target.value !== section.content ||
-                    JSON.stringify(subsections ?? []) !== JSON.stringify(section.subsections ?? []),
-                );
-              }}
+              onChange={(e) => setContent(e.target.value)}
               className="
-                w-full min-h-[320px] p-4
+                w-full min-h-[500px] p-4
                 bg-card text-[#e4e6eb]
                 border border-navy-700 rounded-lg
                 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/50
@@ -117,26 +159,26 @@ export function SectionEditor({ section, event, onSave }: SectionEditorProps) {
               aria-describedby="editor-description"
             />
             <span id="editor-description" className="sr-only">
-              선택한 섹션의 본문을 수정할 수 있습니다
+              선택한 섹션의 본문을 수정할 수 있습니다. 자동 저장됩니다.
             </span>
           </div>
+        </div>
+      </div>
 
-          {/* 소단락 섹션 - 접을 수 있음 */}
-          <div className="flex flex-col border border-navy-700/50 rounded-lg overflow-hidden">
-            <button
-              onClick={() => setShowSubsections(!showSubsections)}
-              className="flex items-center justify-between p-3 bg-card hover:bg-card-hover transition-colors text-left"
-            >
-              <div className="flex items-center gap-3">
-                {showSubsections ? <ChevronUp className="w-4 h-4 text-[#a0a3b1]" /> : <ChevronDown className="w-4 h-4 text-[#a0a3b1]" />}
-                <span className="text-sm font-medium text-[#e4e6eb]">소단락 관리</span>
-                {subsections && subsections.length > 0 && (
-                  <span className="text-xs text-[#a0a3b1]">({subsections.length})</span>
-                )}
-              </div>
+      {/* 우측 슬라이드인 소단락 사이드바 */}
+      {showSubsectionsSidebar && (
+        <div className="w-80 border-l border-navy-700/30 bg-navy-900 flex flex-col overflow-hidden">
+          {/* 사이드바 헤더 */}
+          <div className="p-4 border-b border-navy-700/30 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-[#e4e6eb]">소단락 관리</span>
+              {subsections && subsections.length > 0 && (
+                <span className="text-xs text-[#a0a3b1]">({subsections.length})</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
+                onClick={() => {
                   setSubsections((prev) => [
                     ...(prev ?? []),
                     {
@@ -146,121 +188,91 @@ export function SectionEditor({ section, event, onSave }: SectionEditorProps) {
                       sourceType: 'text',
                     },
                   ]);
-                  setHasChanges(true);
-                  setShowSubsections(true);
                 }}
-                className="inline-flex items-center gap-1 rounded-lg border border-navy-700 px-3 py-1.5 text-xs text-[#e4e6eb] hover:border-accent transition-colors"
+                className="p-1.5 text-[#a0a3b1] hover:text-accent hover:bg-card rounded transition-colors"
+                title="소단락 추가"
               >
-                <Plus className="h-3 w-3" /> 추가
+                <Plus className="w-4 h-4" />
               </button>
-            </button>
-
-            {showSubsections && (
-              <div className="p-4 space-y-3 border-t border-navy-700/50">
-                {(subsections ?? []).length === 0 ? (
-                  <p className="text-xs text-[#a0a3b1]/60 text-center py-4">
-                    녹음/파일 처리 결과가 여기에 표시되며, 손수 추가하거나 수정할 수 있습니다.
-                  </p>
-                ) : (
-                  subsections!.map((subsection) => (
-                    <div key={subsection.id} className="rounded-lg border border-navy-700 bg-navy-900 p-3 shadow-sm">
-                      <div className="flex items-center justify-between gap-2">
-                        <input
-                          value={subsection.title}
-                          onChange={(e) => {
-                            setSubsections((prev) =>
-                              prev?.map((item) =>
-                                item.id === subsection.id ? { ...item, title: e.target.value } : item,
-                              ),
-                            );
-                            setHasChanges(true);
-                          }}
-                          className="flex-1 rounded bg-transparent text-sm text-[#e4e6eb] focus:border-accent focus:outline-none"
-                        />
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() =>
-                              setExpandedSubsectionId((current) =>
-                                current === subsection.id ? null : subsection.id,
-                              )
-                            }
-                            className="rounded border border-navy-700 px-2 py-1 text-[10px] text-[#a0a3b1] hover:border-accent transition-colors"
-                          >
-                            {expandedSubsectionId === subsection.id ? '닫기' : '내용'}
-                          </button>
-                          <button
-                            onClick={() => {
-                              setSubsections((prev) => prev?.filter((item) => item.id !== subsection.id));
-                              setHasChanges(true);
-                            }}
-                            className="rounded border border-navy-700 px-2 py-1 text-[10px] text-[#a0a3b1] hover:border-red-400 hover:text-red-300 transition-colors"
-                            title="삭제"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </button>
-                        </div>
-                      </div>
-                      {expandedSubsectionId === subsection.id && (
-                        <textarea
-                          value={subsection.content}
-                          onChange={(e) => {
-                            setSubsections((prev) =>
-                              prev?.map((item) =>
-                                item.id === subsection.id ? { ...item, content: e.target.value } : item,
-                              ),
-                            );
-                            setHasChanges(true);
-                          }}
-                          className="mt-2 w-full rounded-lg border border-navy-700 bg-card p-2 text-xs text-[#e4e6eb] placeholder:text-[#7a7d8c] focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50"
-                          rows={4}
-                        />
-                      )}
-                    </div>
-                  ))
-                )}
-                <div className="text-xs text-[#a0a3b1]/60 pt-2 border-t border-navy-700/50">
-                  💡 소단락은 음성/파일 처리 결과로 자동 생성되며, 필요 시 직접 추가/수정할 수 있습니다.
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* 액션 버튼 */}
-      {hasChanges && (
-        <div className="p-4 border-t border-navy-700/30 bg-card/50 backdrop-blur-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-[#a0a3b1]">저장하지 않은 변경사항이 있습니다</span>
-            <div className="flex gap-2">
               <button
-                onClick={handleCancel}
-                disabled={isSaving}
-                className="
-                  flex items-center gap-2 px-4 py-2
-                  text-[#a0a3b1] hover:text-[#e4e6eb]
-                  border border-navy-700 rounded-lg
-                  hover:bg-card transition-colors
-                  disabled:opacity-50 disabled:cursor-not-allowed
-                "
+                onClick={() => setShowSubsectionsSidebar(false)}
+                className="p-1.5 text-[#a0a3b1] hover:text-[#e4e6eb] hover:bg-card rounded transition-colors"
+                title="닫기"
               >
                 <X className="w-4 h-4" />
-                취소
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={isSaving}
-                className="
-                  flex items-center gap-2 px-4 py-2
-                  bg-accent hover:bg-accent-hover text-white
-                  rounded-lg transition-colors
-                  disabled:opacity-50 disabled:cursor-not-allowed
-                "
-              >
-                <Save className="w-4 h-4" />
-                {isSaving ? '저장 중...' : '저장'}
               </button>
             </div>
+          </div>
+
+          {/* 소단락 리스트 */}
+          <div className="flex-1 p-4 space-y-3 overflow-y-auto">
+            {(subsections ?? []).length === 0 ? (
+              <p className="text-xs text-[#a0a3b1]/60 text-center py-8">
+                녹음/파일 처리 결과가 여기에 표시되며,<br />
+                손수 추가하거나 수정할 수 있습니다.
+              </p>
+            ) : (
+              subsections!.map((subsection) => (
+                <div key={subsection.id} className="rounded-lg border border-navy-700 bg-card p-3 shadow-sm">
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <input
+                      value={subsection.title}
+                      onChange={(e) => {
+                        setSubsections((prev) =>
+                          prev?.map((item) =>
+                            item.id === subsection.id ? { ...item, title: e.target.value } : item,
+                          ),
+                        );
+                      }}
+                      className="flex-1 rounded bg-transparent text-sm font-medium text-[#e4e6eb] focus:outline-none border-b border-transparent hover:border-navy-600 focus:border-accent transition-colors"
+                    />
+                    <button
+                      onClick={() => {
+                        setSubsections((prev) => prev?.filter((item) => item.id !== subsection.id));
+                      }}
+                      className="p-1 text-[#a0a3b1] hover:text-red-400 transition-colors"
+                      title="삭제"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
+
+                  <div className="space-y-2">
+                    <button
+                      onClick={() =>
+                        setExpandedSubsectionId((current) =>
+                          current === subsection.id ? null : subsection.id,
+                        )
+                      }
+                      className="w-full text-left text-xs text-[#a0a3b1] hover:text-[#e4e6eb] transition-colors"
+                    >
+                      {expandedSubsectionId === subsection.id ? '내용 숨기기 ▲' : '내용 보기 ▼'}
+                    </button>
+
+                    {expandedSubsectionId === subsection.id && (
+                      <textarea
+                        value={subsection.content}
+                        onChange={(e) => {
+                          setSubsections((prev) =>
+                            prev?.map((item) =>
+                              item.id === subsection.id ? { ...item, content: e.target.value } : item,
+                            ),
+                          );
+                        }}
+                        className="w-full rounded-lg border border-navy-700 bg-navy-900 p-2 text-xs text-[#e4e6eb] placeholder:text-[#7a7d8c] focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/50"
+                        rows={6}
+                        placeholder="소단락 내용..."
+                      />
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* 사이드바 푸터 팁 */}
+          <div className="p-4 border-t border-navy-700/30 text-[10px] text-[#a0a3b1]/60">
+            💡 소단락은 음성/파일 처리 결과로 자동 생성됩니다.
           </div>
         </div>
       )}

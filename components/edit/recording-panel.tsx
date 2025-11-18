@@ -95,6 +95,7 @@ export function RecordingPanel({
 
   const [processingState, setProcessingState] = useState<ProcessingState | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [showProcessingTimeline, setShowProcessingTimeline] = useState(false);
 
   // 파일 업로드 핸들러 (MOCK 처리)
   const handleUpload = useCallback(async (blob: Blob) => {
@@ -164,6 +165,13 @@ export function RecordingPanel({
     }
   }, [audioBlob, isRecording, handleUpload]);
 
+  // 자동 타임라인 확장: 녹음 중 또는 처리 중일 때만
+  useEffect(() => {
+    if (isRecording || isUploading || processingState?.current === 'transcribing') {
+      setShowProcessingTimeline(true);
+    }
+  }, [isRecording, isUploading, processingState]);
+
   // 녹음 시작/정지 핸들러
   const handleRecordToggle = async () => {
     if (isRecording) {
@@ -196,8 +204,8 @@ export function RecordingPanel({
 
   return (
     <div className="flex flex-col h-full bg-navy-900 border-l border-navy-700">
-      {/* 헤더 */}
-      <div className="border-b border-navy-800 px-4 py-3">
+      {/* 헤더 (스크롤 독립) */}
+      <div className="border-b border-navy-800 px-4 py-3 flex-shrink-0">
         <div className="flex items-center justify-between mb-2">
           <p className="text-sm font-semibold text-[#e4e6eb]">녹음 & 전사 패널</p>
           <button
@@ -248,9 +256,9 @@ export function RecordingPanel({
         </p>
       </div>
 
-      {/* 녹음 컨트롤 */}
-      <div className="p-4 border-b border-navy-700">
-        <div className="flex flex-col items-center gap-4">
+      {/* 녹음 컨트롤 영역 - 상단 고정 (sticky) */}
+      <div className="sticky top-0 z-10 p-4 border-b border-navy-700 bg-navy-900 flex-shrink-0">
+        <div className="flex flex-col items-center gap-3">
           {/* 녹음 버튼 */}
           <button
             onClick={handleRecordToggle}
@@ -292,7 +300,7 @@ export function RecordingPanel({
             </button>
           )}
 
-          {/* 파일 업로드 */}
+          {/* 파일 업로드 - 녹음 버튼 아래로 이동 */}
           <div className="w-full">
             <label className="
               flex items-center justify-center gap-2 px-4 py-2
@@ -330,7 +338,7 @@ export function RecordingPanel({
         </div>
       </div>
 
-      {/* 처리 단계 타임라인 */}
+      {/* 스크롤 가능 영역 */}
       <div className="flex-1 overflow-y-auto p-4">
         <div className="space-y-4">
           {PROCESSING_STEPS.filter(s => s.step !== 'error').map((stepMeta, index) => {

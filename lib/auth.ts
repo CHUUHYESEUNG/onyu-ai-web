@@ -221,6 +221,7 @@ export async function canAccessProject(
 ): Promise<boolean> {
   const { data, error } = await supabase
     .from('projects')
+    // @ts-ignore - Supabase 타입 추론 이슈
     .select('user_id')
     .eq('id', projectId)
     .single();
@@ -229,5 +230,6 @@ export async function canAccessProject(
     return false;
   }
 
+  // @ts-ignore - Supabase 타입 추론 이슈
   return data.user_id === userId;
 }
