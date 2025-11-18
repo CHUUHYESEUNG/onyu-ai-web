@@ -7,7 +7,11 @@ import {
   BadgeCheck,
   BookOpen,
   CheckCircle2,
+  Download,
+  Eye,
+  FileText,
   Headphones,
+  Loader2,
   Printer,
   Receipt,
   Sparkles,
@@ -106,6 +110,11 @@ export function PublishingFlow({ storyData, onRestart, onViewStory }: Publishing
   const [selectedOptions, setSelectedOptions] = useState<PublishOption[]>(["print", "ebook"]);
   const [details, setDetails] = useState<PublishingDetails>(DEFAULT_DETAILS);
 
+  // PDF 생성 관련 상태
+  const [pdfStatus, setPdfStatus] = useState<'idle' | 'generating' | 'ready' | 'error'>('idle');
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [pdfGenerationProgress, setPdfGenerationProgress] = useState(0);
+
   const toggleOption = (option: PublishOption) => {
     setSelectedOptions((prev) => {
       if (prev.includes(option)) {
@@ -127,6 +136,44 @@ export function PublishingFlow({ storyData, onRestart, onViewStory }: Publishing
         [field]: value,
       },
     }));
+  };
+
+  // PDF 생성 시뮬레이션 함수 (나중에 실제 API로 교체)
+  const handleGeneratePDF = async () => {
+    setPdfStatus('generating');
+    setPdfGenerationProgress(0);
+
+    // 진행률 시뮬레이션
+    const progressInterval = setInterval(() => {
+      setPdfGenerationProgress((prev) => {
+        if (prev >= 90) {
+          clearInterval(progressInterval);
+          return prev;
+        }
+        return prev + 10;
+      });
+    }, 300);
+
+    try {
+      // 임시: 더미 PDF 생성 시뮬레이션 (3초)
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
+      // 나중에 실제 API 호출로 교체
+      // const response = await fetch('/api/generate-pdf', {
+      //   method: 'POST',
+      //   body: JSON.stringify({ storyData }),
+      // });
+      // const { pdfUrl } = await response.json();
+
+      clearInterval(progressInterval);
+      setPdfGenerationProgress(100);
+      setPdfUrl('/sample-autobiography.pdf'); // 임시 URL
+      setPdfStatus('ready');
+    } catch (error) {
+      clearInterval(progressInterval);
+      console.error('PDF 생성 실패:', error);
+      setPdfStatus('error');
+    }
   };
 
   const priceSummary = useMemo(() => {
@@ -401,6 +448,106 @@ export function PublishingFlow({ storyData, onRestart, onViewStory }: Publishing
 
     return (
       <div className="space-y-8">
+        {/* PDF 미리보기 섹션 */}
+        <div className="rounded-2xl border border-[#2BA08C]/25 bg-[#0F3D35]/25 p-6">
+          <header className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <FileText className="h-5 w-5 text-[#2BA08C]" />
+              <div>
+                <h3 className="text-lg text-[#E6F0ED]">PDF 미리보기</h3>
+                <p className="text-sm text-[#E6F0ED]/60">편집한 자서전을 PDF로 확인해보세요</p>
+              </div>
+            </div>
+          </header>
+
+          <div className="space-y-4">
+            {pdfStatus === 'idle' && (
+              <div className="rounded-xl border border-[#2BA08C]/15 bg-[#0B1412] p-6 text-center">
+                <p className="mb-4 text-sm text-[#E6F0ED]/70">
+                  PDF를 생성하여 최종 결과물을 미리 확인할 수 있습니다.
+                </p>
+                <Button onClick={handleGeneratePDF} className="gap-2">
+                  <Eye className="h-4 w-4" />
+                  PDF 미리보기 생성
+                </Button>
+              </div>
+            )}
+
+            {pdfStatus === 'generating' && (
+              <div className="rounded-xl border border-[#2BA08C]/15 bg-[#0B1412] p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <Loader2 className="h-5 w-5 text-[#2BA08C] animate-spin" />
+                  <span className="text-sm text-[#E6F0ED]">PDF 생성 중...</span>
+                  <span className="text-sm text-[#2BA08C]">{pdfGenerationProgress}%</span>
+                </div>
+                <div className="h-2 bg-[#0B0F0E] rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-[#2BA08C] to-[#1F6F63] transition-all duration-300"
+                    style={{ width: `${pdfGenerationProgress}%` }}
+                  />
+                </div>
+                <p className="mt-3 text-xs text-[#E6F0ED]/50">
+                  자서전을 PDF 형식으로 변환하고 있습니다. 잠시만 기다려주세요.
+                </p>
+              </div>
+            )}
+
+            {pdfStatus === 'ready' && pdfUrl && (
+              <div className="rounded-xl border border-[#2BA08C]/30 bg-[#2BA08C]/10 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#2BA08C]/20">
+                      <FileText className="h-5 w-5 text-[#2BA08C]" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-[#E6F0ED]">내 인생의 발자취.pdf</p>
+                      <p className="text-xs text-[#E6F0ED]/60">127 페이지 · 15,420 단어</p>
+                    </div>
+                  </div>
+                  <CheckCircle2 className="h-5 w-5 text-[#2BA08C]" />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => window.open(pdfUrl, '_blank')}
+                    className="flex-1 gap-2 border-[#2BA08C]/30 hover:bg-[#0F3D35]/40"
+                  >
+                    <Eye className="h-4 w-4" />
+                    새 창에서 보기
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      const link = document.createElement('a');
+                      link.href = pdfUrl;
+                      link.download = '내_인생의_발자취.pdf';
+                      link.click();
+                    }}
+                    className="flex-1 gap-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    PDF 다운로드
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {pdfStatus === 'error' && (
+              <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-6">
+                <p className="text-sm text-red-300 mb-4">
+                  PDF 생성 중 문제가 발생했습니다. 다시 시도해주세요.
+                </p>
+                <Button
+                  onClick={handleGeneratePDF}
+                  variant="outline"
+                  className="gap-2 border-red-500/30 hover:bg-red-500/20"
+                >
+                  다시 시도
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+
         <div className="rounded-2xl border border-[#2BA08C]/25 bg-[#0F3D35]/25 p-6">
           <header className="mb-4 flex items-center gap-3">
             <Receipt className="h-5 w-5 text-[#2BA08C]" />
